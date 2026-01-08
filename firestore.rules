@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.role == 'admin'; 
+    }
+
+    // Helper function to check if user owns data
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+      
+      // User Addresses Subcollection
+      match /addresses/{addressId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Products Collection (Public Read, Admin Write)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      allow read: if isOwner(resource.data.user.id) || isAdmin(); 
+      allow write: if false; 
+    }
+
+    // Backend Only Collections
+    match /payments/{paymentId} { allow read, write: if false; }
+    match /refunds/{refundId} { allow read, write: if false; }
+    match /analytics/{docId} { allow read, write: if false; }
+  }
+}

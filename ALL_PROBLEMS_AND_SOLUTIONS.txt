@@ -1,0 +1,311 @@
+
+================================================================================
+COMPLETE TROUBLESHOOTING GUIDE - OptiStyle Platform
+================================================================================
+
+This document lists EVERY possible problem you might face while running, building, or deploying the OptiStyle application, along with exact step-by-step solutions.
+
+Use "Ctrl+F" (or Cmd+F) to search for your error message.
+
+================================================================================
+SECTION 1: GENERAL SYSTEM PROBLEMS
+================================================================================
+
+PROBLEM: "npm install" fails with EACCESS or Permission Denied
+WHY: Your computer does not allow writing to the folder.
+SOLUTION:
+1. Windows: Run Command Prompt as Administrator.
+2. Mac/Linux: Run "sudo npm install" (not recommended usually) OR fix permissions: "sudo chown -R $USER /usr/local/lib/node_modules".
+3. Delete "node_modules" folder and "package-lock.json", then try again.
+
+PROBLEM: "Node version mismatch" or "Engine incompatible"
+WHY: You are using an old or very new Node.js version not supported by some libraries.
+SOLUTION:
+1. Check version: "node -v"
+2. Install Node v18.x or v20.x (LTS).
+3. If using nvm (Node Version Manager): "nvm install 18" then "nvm use 18".
+
+PROBLEM: "Port 5000 already in use" or "EADDRINUSE"
+WHY: Another program (or a stuck previous run of this server) is using the port.
+SOLUTION:
+1. Windows:
+   - Open Task Manager. Find "Node.js". End Task.
+   - Or run in CMD: "netstat -ano | findstr :5000". Note the PID. Run "taskkill /PID <PID> /F".
+2. Mac/Linux:
+   - Run: "lsof -i :5000". Note PID. Run "kill -9 <PID>".
+3. Temporary Fix: Change PORT in .env file to 5001.
+
+================================================================================
+SECTION 2: FRONTEND LOCAL RUN PROBLEMS
+================================================================================
+
+PROBLEM: Blank White Screen when opening http://localhost:5173
+WHY: Usually a JavaScript error stopped React from mounting.
+SOLUTION:
+1. Right-click page -> Inspect -> Console.
+2. If error is "process is not defined": You used "process.env" in Vite. Use "import.meta.env" instead.
+3. If error is "import.meta.env is undefined": Your .env file might be missing or misplaced.
+4. Restart the server: "Ctrl+C" then "npm run dev".
+
+PROBLEM: "Tailwind styles not applying" (Ugly plain HTML)
+WHY: Tailwind config is missing or content paths are wrong.
+SOLUTION:
+1. Check "tailwind.config.js". Ensure "content" array includes "./src/**/*.{js,ts,jsx,tsx}".
+2. Check "src/index.css". Ensure it has "@tailwind base; @tailwind components; @tailwind utilities;".
+3. Ensure "src/main.tsx" imports "./index.css".
+
+PROBLEM: 404 Not Found when refreshing a page like /shop
+WHY: The server does not know that /shop is a React route.
+SOLUTION (Local): This usually works in Vite dev server. If not, restart it.
+SOLUTION (Production): See "Netlify Deployment Problems".
+
+PROBLEM: "Vite build failed"
+WHY: TypeScript errors or missing files.
+SOLUTION:
+1. Run "npm run build" locally to see the error log.
+2. If "Property 'x' does not exist on type 'y'": Fix the TypeScript interface in "types.ts".
+3. If "Cannot find module": Check import paths. Case matters! (Header.tsx vs header.tsx).
+
+================================================================================
+SECTION 3: BACKEND LOCAL RUN PROBLEMS
+================================================================================
+
+PROBLEM: Server starts but crashes immediately
+WHY: Missing .env variables or syntax error.
+SOLUTION:
+1. Check terminal output.
+2. If "Firebase Admin Init Error": Check FIREBASE_PRIVATE_KEY in .env. It must be inside quotes.
+3. If "Razorpay Error": Check keys in .env.
+
+PROBLEM: "Firebase Admin: Credential implementation provided..."
+WHY: The private key in .env is formatted incorrectly.
+SOLUTION:
+1. Open .env.
+2. Ensure FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+3. The newline characters (\n) must be literal string characters, not actual line breaks.
+
+PROBLEM: CORS Error (Access-Control-Allow-Origin)
+WHY: Frontend (port 5173) is trying to talk to Backend (port 5000) but Backend blocked it.
+SOLUTION:
+1. Open "backend/server.ts".
+2. Ensure "app.use(cors());" is present.
+3. If using specific origin, ensure "http://localhost:5173" is allowed.
+
+PROBLEM: API returns 500 Internal Server Error
+WHY: Logic crash inside the endpoint.
+SOLUTION:
+1. Check the terminal running the backend. It will show the exact error stack trace.
+2. Fix the code causing the crash (e.g., trying to read property of undefined).
+
+================================================================================
+SECTION 4: ENVIRONMENT VARIABLE PROBLEMS
+================================================================================
+
+PROBLEM: Variables are "undefined" in code
+WHY:
+- Frontend: Did not start with VITE_.
+- Backend: Did not use dotenv.config() or file is missing.
+SOLUTION:
+1. Rename frontend vars to VITE_MY_VAR.
+2. Backend: Ensure "import dotenv from 'dotenv'; dotenv.config();" is at the TOP of the file.
+3. Restart server. Changes to .env do not apply automatically.
+
+PROBLEM: Netlify env mismatch
+WHY: You set vars in .env locally but forgot to add them to Netlify Dashboard.
+SOLUTION:
+1. Go to Netlify -> Site Settings -> Environment Variables.
+2. Copy-paste all keys and values from local .env.
+3. Redeploy the site.
+
+================================================================================
+SECTION 5: FIREBASE PROBLEMS
+================================================================================
+
+PROBLEM: Auth Login Popup closes immediately or fails
+WHY: Domain not authorized in Firebase Console.
+SOLUTION:
+1. Go to Firebase Console -> Authentication -> Settings -> Authorized Domains.
+2. Add "localhost".
+3. Add your Netlify domain (e.g., my-app.netlify.app).
+
+PROBLEM: "Missing or insufficient permissions" (Firestore)
+WHY: Security Rules blocked the read/write request.
+SOLUTION:
+1. Go to Firebase Console -> Firestore -> Rules.
+2. Temporarily set to "allow read, write: if true;" to debug.
+3. PERMANENT FIX: Update rules to allow specific collections (e.g., allow read on 'products').
+
+PROBLEM: User created but no data in Firestore
+WHY: The code might only be creating an Auth user but failing to write the User Profile document.
+SOLUTION:
+1. Check "register" function in "AuthContext.tsx".
+2. Ensure it calls "setDoc" to create the user profile in "users" collection after signup.
+
+================================================================================
+SECTION 6: PAYMENT (RAZORPAY) PROBLEMS
+================================================================================
+
+PROBLEM: Clicking "Pay" does nothing
+WHY: Razorpay script not loaded or Key ID missing.
+SOLUTION:
+1. Ensure "VITE_RAZORPAY_KEY_ID" is set in .env.
+2. Check browser console. If "Razorpay is not defined", the script in index.html failed to load. Check internet.
+
+PROBLEM: "Invalid Key Id" error in popup
+WHY: You are using the Secret instead of the Key ID, or using Test Key in Live Mode.
+SOLUTION:
+1. Check .env. Key ID starts with "rzp_test_" or "rzp_live_".
+2. Do NOT put the secret (long random string) in the frontend variable.
+
+PROBLEM: Payment successful but Order status is still "Pending"
+WHY: Verification API failed or Frontend didn't call it.
+SOLUTION:
+1. Check Backend Logs. Did "/verify" endpoint receive the request?
+2. If "Signature Mismatch": The backend secret does not match the frontend key ID account. Ensure both use keys from the SAME Razorpay account.
+
+================================================================================
+SECTION 7: EMAIL SYSTEM PROBLEMS
+================================================================================
+
+PROBLEM: Email not sending (Backend log: "Invalid Grant")
+WHY: The Refresh Token expired or has been revoked (e.g., changed password).
+SOLUTION:
+1. Go to Google OAuth Playground.
+2. Authorize Gmail API again.
+3. Get a NEW Refresh Token.
+4. Update .env with the new token.
+
+PROBLEM: "Username and Password not accepted"
+WHY: You are trying to use a password instead of OAuth2. Gmail blocked "Less Secure Apps" in 2022.
+SOLUTION:
+You MUST use OAuth2 (Client ID, Secret, Refresh Token). See Setup Guide.
+
+PROBLEM: Emails going to Spam
+WHY: Sending from a generic Gmail address (e.g., @gmail.com) looks suspicious for business emails.
+SOLUTION:
+1. This is normal for free Gmail accounts sending automated emails.
+2. For production, use a service like SendGrid, AWS SES, or Google Workspace with a custom domain.
+
+================================================================================
+SECTION 8: PDF & FILE PROBLEMS
+================================================================================
+
+PROBLEM: PDF Download gives "Network Error" or corrupted file
+WHY: The browser tried to read PDF binary data as text (JSON).
+SOLUTION:
+1. Ensure the API request in Frontend sets "responseType: 'blob'".
+2. Example: axios.get(url, { responseType: 'blob' }).
+
+PROBLEM: Invoice PDF has missing fields
+WHY: Data passed to PDF generator was null.
+SOLUTION:
+1. Check database order object. Does it have "user.address"?
+2. Update PDF logic to handle missing data (e.g., "N/A" fallback).
+
+================================================================================
+SECTION 9: ADMIN PANEL PROBLEMS
+================================================================================
+
+PROBLEM: I logged in but cannot see Admin Panel
+WHY: Your user account does not have "role: 'admin'" in Firestore.
+SOLUTION:
+1. Go to Firebase Console -> Firestore -> "users" collection.
+2. Find your user ID document.
+3. Add field "role" with value "admin".
+4. Refresh the app.
+
+PROBLEM: Admin actions (e.g., Delete Product) fail
+WHY: Backend middleware blocked it or Frontend check failed.
+SOLUTION:
+1. Check Backend: Does the user token sent in header match an admin user in DB?
+2. Check Frontend: Ensure you are sending "Authorization: Bearer <token>".
+
+================================================================================
+SECTION 10: NETLIFY DEPLOYMENT PROBLEMS
+================================================================================
+
+PROBLEM: "Page Not Found" when refreshing
+WHY: Netlify doesn't support SPA routing by default.
+SOLUTION:
+Ensure "public/_redirects" file exists and contains: "/*  /index.html  200".
+
+PROBLEM: Build failed on Netlify
+WHY: Usually TypeScript errors that were ignored locally but blocked CI/CD.
+SOLUTION:
+1. Read Netlify Deploy Log. It points to the exact line number.
+2. Fix the type error.
+3. Push changes to Git.
+
+PROBLEM: Env variables not working
+WHY: You added them after the build started.
+SOLUTION:
+1. Add vars in Netlify.
+2. Trigger a NEW deploy (Clear cache and deploy).
+
+================================================================================
+SECTION 11: PERFORMANCE & UX PROBLEMS
+================================================================================
+
+PROBLEM: Site loads very slowly
+WHY: Large images or large JS bundle.
+SOLUTION:
+1. Use compressed images (WebP format).
+2. Lazy load images (loading="lazy").
+3. React: Use lazy loading for routes (React.lazy).
+
+PROBLEM: Checkout button double-clicks / creates duplicate orders
+WHY: User clicks "Pay" multiple times while loading.
+SOLUTION:
+Disable the button after the first click. Show a spinner: "<button disabled={loading}>..."
+
+================================================================================
+SECTION 12: EMERGENCY RECOVERY & SAFETY
+================================================================================
+
+SCENARIO: Critical Bug in Production (e.g., Wrong Prices)
+ACTION:
+1. Log in to Admin Panel.
+2. Enable "Maintenance Mode".
+3. Fix the bug locally.
+4. Test locally.
+5. Deploy fix.
+6. Disable Maintenance Mode.
+
+SCENARIO: Payments Failing for Everyone
+ACTION:
+1. Check Razorpay Dashboard (Is your account active?).
+2. Disable "Allow Checkout" in Admin Settings to prevent user frustration.
+3. Display a banner: "Payments are momentarily down."
+
+SCENARIO: Admin Locked Out
+ACTION:
+1. Go to Firebase Console.
+2. Manually edit "system/config" document.
+3. Set "maintenanceMode" to false or fix whatever setting broke the site.
+
+================================================================================
+SECTION 13: FINAL PREVENTION CHECKLIST
+================================================================================
+
+BEFORE EVERY DEPLOY:
+1. Run "npm run build" locally to catch TS errors.
+2. Check if .env variables changed (if so, update Netlify).
+3. Test the full flow (Login -> Cart -> Pay) on localhost.
+
+NEVER HARDCODE:
+- API Keys.
+- Secrets.
+- Admin Email addresses.
+- Backend URLs (always use env vars).
+
+NEVER DELETE:
+- .env.example (It is the guide for future developers).
+- public/_redirects (Breaks Netlify routing).
+- package-lock.json (Breaks dependency versions).
+
+SAFE TESTING:
+- Use "rzp_test_..." keys for testing payments.
+- Use a test email for checking notifications.
+- Never test with real customer data.
+
+Follow this guide to solve 99% of issues you will encounter.

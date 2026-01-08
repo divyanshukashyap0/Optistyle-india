@@ -1,0 +1,28 @@
+
+================================================================================
+ENVIRONMENT SETUP INSTRUCTIONS
+================================================================================
+
+To run the project locally, follow these steps exactly:
+
+1. LOCATE FILES
+   - `env.txt` (Found in project root)
+   - `backend/env.txt` (Found in backend folder)
+
+2. RENAME (Frontend & Local Dev)
+   - Rename `env.txt` → `.env`
+   - Ensure it stays in the ROOT directory.
+
+3. CONFIGURE
+   - Open `.env`.
+   - Replace all `CHANGE_ME` placeholders with your real API keys.
+   - Ensure `VITE_API_URL` is set to `http://localhost:5000/api`.
+
+4. RESTART
+   - If your terminal was open, restart it.
+   - Run `npm run server` and `npm run dev` again.
+
+5. BACKEND DEPLOYMENT (Optional)
+   - Use `backend/env.txt` as a reference for setting variables on your cloud host (Render/Railway).
+
+================================================================================

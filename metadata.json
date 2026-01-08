@@ -1,0 +1,7 @@
+{
+  "name": "OptiStyle - Affordable Eyewear",
+  "description": "A optical e-commerce platform featuring AI-powered frame recommendations, prescription lens configuration, and a seamless checkout experience.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

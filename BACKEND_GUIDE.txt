@@ -1,0 +1,74 @@
+
+================================================================================
+BACKEND DEVELOPER GUIDE
+================================================================================
+
+This guide explains the Node.js/Express backend structure and workflow.
+
+================================================================================
+1. QUICK START
+================================================================================
+
+Command to run: `npm run server`
+Local URL: http://localhost:5000
+
+Key Requirement:
+The `.env` file in the root directory must contain all secrets (Firebase, Razorpay).
+
+================================================================================
+2. FOLDER STRUCTURE (backend/)
+================================================================================
+
+/config       -> Environment setup and Firebase Admin init.
+/controllers  -> Logic for API endpoints (Payment, Admin, Auth).
+/routes       -> URL definitions (router.get/post).
+/services     -> Helpers (Database access, Email sending, PDF generation).
+server.ts     -> Entry point (App configuration).
+
+================================================================================
+3. SECURITY & CONFIGURATION
+================================================================================
+
+We use a centralized config file: `backend/config/env.ts`.
+Do not use `process.env` directly in logic files.
+
+Secrets:
+- `FIREBASE_PRIVATE_KEY`: Used to write to the database as Admin.
+- `RAZORPAY_KEY_SECRET`: Used to verify payments and process refunds.
+- `GMAIL_REFRESH_TOKEN`: Used to send emails via OAuth.
+
+WARNING:
+Never commit `.env` files to GitHub. If you leak these keys, attackers can delete your database or steal funds.
+
+================================================================================
+4. CORE LOGIC
+================================================================================
+
+API Endpoints:
+- `server.ts` defines the base routes.
+- `/api/payment` -> Handles orders and verification.
+- `/api/admin` -> Protected routes for dashboard actions.
+
+Database (Firestore):
+- We use `firebase-admin` to bypass client-side security rules for trusted server actions.
+- Logic is located in `backend/services/db.ts`.
+
+PDF Generation:
+- We use `pdfkit` to generate invoices in-memory.
+- Files are not saved to disk; they are streamed directly to the email attachment.
+
+================================================================================
+5. COMMON ISSUES
+================================================================================
+
+Server starts but crashes instantly:
+- Check if `PORT` 5000 is occupied.
+- Check if `FIREBASE_PRIVATE_KEY` is formatted correctly in `.env`.
+
+"Credential implementation provided..." Error:
+- This means the Firebase Private Key is invalid or missing newlines (`\n`).
+
+Payment Verification Failed:
+- Ensure the Backend Razorpay Keys match the Frontend Razorpay Keys.
+
+================================================================================

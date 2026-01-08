@@ -1,0 +1,66 @@
+
+================================================================================
+ADMINISTRATOR PANEL GUIDE
+================================================================================
+
+This document explains how to access and use the OptiStyle Admin Dashboard.
+
+================================================================================
+1. GETTING ACCESS
+================================================================================
+
+The Admin Panel is hidden from normal users. To get access:
+
+Step 1: Sign up as a normal user on the website (/register).
+Step 2: Access the Firestore Database (Firebase Console).
+Step 3: Find your user document in the `users` collection.
+Step 4: Change the `role` field from "user" to "admin".
+Step 5: Refresh the website. You will see "Admin Panel" in the profile menu or footer.
+
+================================================================================
+2. DASHBOARD FEATURES
+================================================================================
+
+OVERVIEW:
+- View total revenue, recent orders, and active user count.
+
+ORDERS:
+- View all customer orders.
+- Change status (e.g., Pending -> Shipped -> Delivered).
+- Download Tax Invoices.
+
+PRODUCTS:
+- Add new eyewear products.
+- Edit prices, descriptions, and stock status.
+- Delete obsolete items.
+
+USERS:
+- View registered customers.
+- Ban/Unban users (prevents them from logging in).
+- Modify roles (Promote to Admin).
+
+SYSTEM:
+- Maintenance Mode: Shuts down the public website for updates.
+- Checkout Toggle: Temporarily disable payments if overwhelmed.
+
+================================================================================
+3. MANAGING REFUNDS
+================================================================================
+
+1. Go to "Refund Requests" in the Admin Panel.
+2. Review the customer's reason.
+3. Click "Approve":
+   - If paid Online: Money is automatically refunded via Razorpay.
+   - If paid via COD: You must manually transfer funds to the customer.
+4. Click "Reject":
+   - The order status updates to "Refund Rejected".
+
+================================================================================
+4. SAFETY RULES
+================================================================================
+
+- MAINTENANCE MODE: Only use this if the site is broken. It stops all sales.
+- BANNING USERS: Only ban for fraud or abuse.
+- REFUNDS: Once approved, online refunds cannot be reversed.
+
+================================================================================

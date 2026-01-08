@@ -1,0 +1,71 @@
+
+================================================================================
+CLIENT GUIDE - Managing Your OptiStyle Website
+================================================================================
+
+Welcome! This simple guide explains how to manage your online store.
+
+================================================================================
+1. LOGGING IN AS ADMIN
+================================================================================
+
+1. Open your website.
+2. Go to the "Login" page.
+3. Enter your Admin Email and Password.
+4. Once logged in, go to your Profile (User Icon).
+5. Click "Admin Dashboard".
+
+================================================================================
+2. PROCESSING ORDERS
+================================================================================
+
+WHEN A NEW ORDER ARRIVES:
+1. You will receive an email notification.
+2. Go to Admin Dashboard -> "Orders".
+3. You will see the new order with status "Pending" or "Processing".
+
+SHIPPING THE ITEM:
+1. Pack the glasses.
+2. In the dashboard, change the Order Status to "Shipped".
+3. Hand it over to your courier.
+
+COMPLETING THE ORDER:
+1. Once the customer receives it, change status to "Delivered".
+2. If it was a Cash on Delivery (COD) order, ensure you collected the money first.
+
+================================================================================
+3. MANAGING PRODUCTS
+================================================================================
+
+ADD NEW GLASSES:
+1. Go to Admin Dashboard -> "Products".
+2. Click "Add Product".
+3. Upload the image link, enter the name, price, and description.
+4. Click Save. It appears on the shop immediately.
+
+CHANGE PRICE:
+1. Find the product in the list.
+2. Click the "Edit" (pencil) icon.
+3. Update the price.
+4. Click Save.
+
+================================================================================
+4. HANDLING REFUNDS
+================================================================================
+
+If a customer asks for a refund:
+1. Go to "Refund Requests" in the dashboard.
+2. Review their reason.
+3. Click "Approve" to refund them (Automatic for Online payments).
+4. Click "Reject" if the return is invalid.
+
+================================================================================
+5. EMERGENCY CONTROLS
+================================================================================
+
+If something goes wrong (e.g., you run out of stock or close for holidays):
+1. Go to "System" settings in the dashboard.
+2. You can disable "Checkout" to stop people from buying.
+3. You can enable "Maintenance Mode" to close the site temporarily.
+
+================================================================================

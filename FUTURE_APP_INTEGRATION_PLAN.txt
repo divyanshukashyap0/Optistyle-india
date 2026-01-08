@@ -1,0 +1,199 @@
+
+================================================================================
+OptiStyle - FUTURE APP INTEGRATION ARCHITECTURE (Android / iOS / PWA)
+================================================================================
+
+This document outlines the architectural strategy to extend OptiStyle from a Web-only platform to a unified Web + Mobile ecosystem.
+
+CORE PRINCIPLE: "Write Once (Backend), Run Everywhere (Clients)."
+
+The existing Node.js/Express backend serves as the Central API. The Android and iOS apps will consume these APIs exactly like the React website does.
+
+================================================================================
+1. API-FIRST STRATEGY (Unified Backend)
+================================================================================
+
+The backend (`/backend`) is the Single Source of Truth.
+
+RULES:
+1. NO logic exists solely on the client.
+   - Wrong: App calculates discount locally.
+   - Right: App sends code to `/api/cart/apply-coupon`, Backend calculates, returns total.
+   
+2. JSON Everywhere.
+   - The backend already returns JSON. This is native to Swift (iOS) and Kotlin (Android).
+
+3. Statelessness.
+   - The server does not remember "sessions". Every request includes an Auth Token.
+   - This allows the app to switch form WiFi to 4G without breaking the session.
+
+ENDPOINTS MAPPING:
+- Web: GET /api/products  ->  App: GET /api/products
+- Web: POST /create-order ->  App: POST /create-order
+- Web: GET /profile       ->  App: GET /profile
+
+ACTION ITEM:
+- Ensure `cors` in `server.ts` allows requests from mobile app schemes (or simply allows public access secured by Tokens).
+
+================================================================================
+2. AUTHENTICATION & USER IDENTITY
+================================================================================
+
+We use Firebase Authentication. This is the "Golden Bridge" between Web and App.
+
+STRATEGY:
+1. User logs in on Web -> Gets `access_token` (JWT).
+2. User logs in on App -> Gets `access_token` (JWT).
+3. Both platforms send this token in the Header:
+   `Authorization: Bearer <firebase_id_token>`
+
+BACKEND LOGIC (Existing `verifyAdmin` / Auth Middleware):
+- The backend verifies the token using `firebase-admin`.
+- It extracts the `uid`.
+- It fetches the user profile from Firestore `users/{uid}`.
+- **RESULT:** A user can add items to cart on Web, open the App, and (if cart is synced) see them there.
+
+FUTURE ENHANCEMENT:
+- Add "Social Login" (Google/Apple) in Firebase Console.
+- Web and App automatically inherit support without backend code changes.
+
+================================================================================
+3. DATA SYNC & FIRESTORE STRUCTURE
+================================================================================
+
+Firestore is a real-time database. Mobile apps should leverage this for a "snappy" feel.
+
+REAL-TIME LISTENERS:
+- The Web app currently "fetches" data (`getDocs`).
+- Mobile Apps should "listen" to data (`onSnapshot`).
+
+USE CASE - ORDER STATUS:
+1. Admin changes status to "Shipped" in Admin Panel.
+2. Firestore document updates.
+3. Mobile App (listening to `orders/{id}`) receives update instantly.
+4. App triggers a local notification: "Your Order is Shipped!".
+
+OFFLINE PERSISTENCE:
+- Firebase SDK for Android/iOS has built-in offline caching.
+- If a user opens the app in a tunnel, they see their past orders.
+- When internet returns, the app syncs new data automatically.
+
+================================================================================
+4. PAYMENT READINESS (RAZORPAY NATIVE)
+================================================================================
+
+Current Flow (Web):
+1. Frontend calls `/create-order`. Backend makes Razorpay Order ID.
+2. Frontend opens Razorpay JS Modal.
+3. User pays.
+4. Frontend calls `/verify`. Backend checks HMAC signature.
+
+Future Flow (Mobile):
+1. App calls `/create-order`. Backend makes Razorpay Order ID (SAME API).
+2. App opens **Razorpay Native SDK** (Android/iOS specific).
+3. User pays via UPI/App switching.
+4. App calls `/verify`. Backend checks HMAC signature (SAME API).
+
+KEY CONSTRAINT:
+- The backend `verifyPayment` controller must NOT care if the request comes from Web or App.
+- It only validates: `order_id` + `payment_id` + `signature` against the Secret.
+
+ACTION ITEM:
+- Ensure the `currency` field is strictly handled in backend to prevent currency mismatch errors in native SDKs.
+
+================================================================================
+5. UNIFIED NOTIFICATION SYSTEM
+================================================================================
+
+Currently: Backend sends Emails via Nodemailer.
+Future: Backend sends Push Notifications via FCM (Firebase Cloud Messaging).
+
+ARCHITECTURE:
+Create a centralized "Notification Service" in Backend.
+
+```typescript
+// Proposed backend/services/notificationService.ts
+export const notifyUser = async (userId: string, event: string, data: any) => {
+  // 1. Send Email (Existing)
+  await sendEmail(userId, event, data);
+
+  // 2. Send Push Notification (New)
+  const userDoc = await db.collection('users').doc(userId).get();
+  const fcmToken = userDoc.data()?.fcmToken;
+  
+  if (fcmToken) {
+    await admin.messaging().send({
+      token: fcmToken,
+      notification: { title: data.title, body: data.message }
+    });
+  }
+}
+```
+
+APP RESPONSIBILITY:
+- On App launch, get FCM Token.
+- Send Token to Backend: `POST /api/user/device-token`.
+- Backend saves it to `users/{uid}/fcmToken`.
+
+================================================================================
+6. ADMIN CONTROL & VERSIONING
+================================================================================
+
+Mobile apps cannot be "refreshed" like websites. Old versions exist in the wild.
+
+STRATEGY:
+1. API Versioning (Optional but Recommended):
+   - Prefix routes: `/api/v1/...`.
+   - If breaking changes occur, create `/api/v2/...`.
+
+2. Force Update Mechanism (Remote Config):
+   - Use the existing Firestore `system/config` collection.
+   - Add fields: `minAndroidVersion`, `minIosVersion`.
+   - App checks this on launch. If App Version < Min Version, block access and show "Update Required" link to Play Store.
+
+3. Feature Flags:
+   - Use `system/config` to toggle features.
+   - Example: `enableAiChat: false`.
+   - Both Web and App hide the AI Chat button instantly.
+
+================================================================================
+7. DEEP LINKING (URL STRATEGY)
+================================================================================
+
+Objective: Clicking `optistyle.com/product/123` in WhatsApp opens the App (if installed) or Website.
+
+IMPLEMENTATION:
+- Android: App Links (verified via `assetlinks.json` hosted on website).
+- iOS: Universal Links (verified via `apple-app-site-association` hosted on website).
+
+BACKEND ROLE:
+- Serve these verification files from the `public/` folder of the hosted frontend.
+- Ensure URL structure (`/product/:id`) is identical on App Router and Web Router.
+
+================================================================================
+8. SCALING CHECKLIST (Before Launching App)
+================================================================================
+
+[ ] Security: Ensure Firestore Rules strictly enforce `request.auth.uid == userId`.
+[ ] Performance: Add indexes to Firestore for complex queries (e.g., Filtering Products).
+[ ] Assets: Ensure product images are optimized (WebP) to save mobile data.
+[ ] Error Handling: Ensure API returns standard HTTP codes (401, 404, 500) so the App can show correct error screens (e.g., "Login Expired" vs "Server Error").
+[ ] Legal: Add Terms & Privacy Policy URLs in the App settings (Apple requires this).
+
+================================================================================
+9. SUMMARY
+================================================================================
+
+The system is 90% App-Ready.
+- Database: Ready (Firestore).
+- Auth: Ready (Firebase).
+- Logic: Ready (Node.js API).
+- Payments: Ready (Razorpay).
+
+Pending Work for Mobile Team:
+1. Build UI (Flutter/React Native/Native).
+2. Hook up Auth SDK.
+3. Integrate Razorpay Native SDK.
+4. Push FCM Token to backend.
+
+No rewrite of the core platform is required.

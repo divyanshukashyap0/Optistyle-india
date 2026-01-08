@@ -1,0 +1,174 @@
+
+================================================================================
+PROJECT HANDOVER DOCUMENT - OptiStyle
+================================================================================
+
+This document provides a technical overview for developers taking over the project.
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+WHAT IT DOES:
+OptiStyle is an e-commerce platform for selling eyewear.
+Core features:
+- Product Catalog & Search
+- Shopping Cart & Checkout
+- Online Payments (Razorpay) & COD
+- User Authentication (Firebase)
+- Admin Dashboard (Order/Product management)
+- AI Stylist (Chatbot for recommendations)
+- AI Eye Test (Vision screening tool)
+- Automated PDF Invoicing & Emailing
+
+================================================================================
+2. TECH STACK OVERVIEW
+================================================================================
+
+FRONTEND:
+- React 18 (Vite)
+- TypeScript
+- Tailwind CSS (Styling)
+- Framer Motion (Animations)
+- React Router DOM (Routing)
+- Axios (API calls)
+
+BACKEND:
+- Node.js (Runtime)
+- Express.js (Framework)
+- PDFKit (PDF Generation)
+- Nodemailer (Emailing)
+- Razorpay SDK (Payments)
+
+DATABASE & AUTH:
+- Firebase Firestore (NoSQL Database)
+- Firebase Authentication (User Management)
+
+SERVICES:
+- Razorpay (Payment Gateway)
+- Gmail API (Transactional Emails via OAuth2)
+- DeepSeek / OpenAI (AI Chatbot - Abstraction Layer)
+
+================================================================================
+3. ARCHITECTURE OVERVIEW
+================================================================================
+
+FRONTEND FLOW:
+User -> React App -> Axios -> Backend API
+User -> React App -> Firebase Auth (Direct SDK)
+
+BACKEND FLOW:
+API Endpoint -> Controller -> Service Layer -> Database (Firestore)
+                             -> External APIs (Razorpay, AI, Email)
+
+DATA FLOW:
+- Frontend reads products from Backend (or cached/mock initially).
+- Orders are sent to Backend.
+- Backend writes to Firestore.
+- Backend triggers Emails.
+
+AUTH FLOW:
+- Frontend handles Login/Signup via Firebase Client SDK.
+- Frontend gets ID Token.
+- Frontend sends ID Token in Header (`Authorization: Bearer <token>`) for protected routes.
+- Backend verifies ID Token using Firebase Admin SDK middleware.
+
+================================================================================
+4. ENVIRONMENT VARIABLES SUMMARY
+================================================================================
+
+FRONTEND (.env):
+- VITE_API_URL: Backend base URL.
+- VITE_FIREBASE_...: Firebase Client config keys.
+- VITE_RAZORPAY_KEY_ID: Public Key for Payment Modal.
+
+BACKEND (.env):
+- PORT: Server port (default 5000).
+- FIREBASE_...: Admin SDK service account credentials.
+- RAZORPAY_KEY_ID & SECRET: For signature verification & refunds.
+- GMAIL_...: OAuth2 credentials for sending emails.
+- ADMIN_EMAIL: Email to receive admin alerts.
+
+================================================================================
+5. DEPLOYMENT OVERVIEW
+================================================================================
+
+FRONTEND:
+- Platform: Netlify (Recommended) or Vercel.
+- Build Command: `npm run build`.
+- Output Dir: `dist`.
+- SPA Routing: Requires `_redirects` file (included in /public).
+
+BACKEND:
+- Platform: Render, Railway, or Heroku.
+- Build Command: `npm install` (and `npm run build` if compiled).
+- Start Command: `npm run server`.
+- Secrets: Must be added to platform environment settings.
+
+COMMON ISSUES:
+- CORS: Ensure backend `cors` config allows frontend domain.
+- Firebase Private Key: Newlines `\n` in private key string often break in env vars. Wrap in quotes or handle in code.
+
+================================================================================
+6. ADMIN SYSTEM OVERVIEW
+================================================================================
+
+ROLES:
+- 'user': Standard customer.
+- 'admin': Full access to Admin Panel.
+
+PERMISSIONS:
+- Admin routes protected by `verifyAdmin` middleware in backend.
+- Admin UI protected by `<ProtectedRoute requireAdmin={true}>` wrapper.
+
+SAFETY:
+- Admin actions are logged in `audit_logs` collection.
+- Critical actions (System Config) require specific approval flow logic (if enabled).
+
+================================================================================
+7. PAYMENT & INVOICE OVERVIEW
+================================================================================
+
+PAYMENT FLOW:
+1. Frontend calls `/create-order` -> Backend creates Razorpay Order.
+2. Frontend opens Razorpay Modal.
+3. User pays -> Razorpay returns `payment_id` & `signature`.
+4. Frontend calls `/verify` -> Backend checks signature HMAC.
+5. If valid, Order status -> 'Processing'.
+
+REFUND FLOW:
+1. User/Admin requests refund.
+2. Admin approves via API.
+3. Backend calls Razorpay Refund API (for online) or marks manual (for COD).
+4. Order status -> 'Refunded'.
+
+INVOICE LOGIC:
+- Generated using `pdfkit` on the fly.
+- Data pulled from Order object + GST Utility calculation.
+- Sent as buffer via email attachment.
+
+================================================================================
+8. KNOWN LIMITATIONS
+================================================================================
+
+- Stock Management: Currently basic. No reservation on "Add to Cart". Stock deducts only on order completion.
+- Eye Test: It is a screening simulation (heuristic based), not a medically certified diagnostic tool.
+- AI Chat: Uses a generic prompt wrapper. Context window is limited.
+
+================================================================================
+9. FUTURE ENHANCEMENT IDEAS
+================================================================================
+
+- Wishlist Feature.
+- Multiple Address Management (Basic implementation exists).
+- Advanced Analytics Dashboard.
+- Loyalty Points System.
+- Integration with Shiprocket for real shipping updates.
+
+================================================================================
+10. IMPORTANT NOTES
+================================================================================
+
+- DO NOT commit `.env` files.
+- DO NOT delete the `admin` user from Firestore manually unless you have a backup admin.
+- CONTACT: [Your Name/Agency] for critical architecture questions.

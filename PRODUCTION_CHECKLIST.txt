@@ -1,0 +1,172 @@
+
+================================================================================
+PRODUCTION CHECKLIST - OptiStyle Deployment
+================================================================================
+
+Use this checklist BEFORE going live and immediately AFTER deployment.
+
+================================================================================
+1. PRE-PRODUCTION CHECKLIST (Before Deploy)
+================================================================================
+
+ENVIRONMENT VARIABLES:
+[ ] VITE_API_URL points to the PRODUCTION backend URL (not localhost).
+[ ] VITE_FIREBASE_... keys are correct for the Production Firebase Project.
+[ ] VITE_RAZORPAY_KEY_ID is the LIVE key (not Test key) if launching for real money.
+[ ] RAZORPAY_KEY_SECRET (Backend) matches the Live Key ID.
+[ ] GMAIL_... variables are set for the official support email account.
+
+FIREBASE CHECKS:
+[ ] Firestore Rules are set to "Strict" (only allow owner/admin access).
+[ ] Authentication "Email/Password" provider is enabled.
+[ ] "Authorized Domains" in Firebase Auth settings includes your custom domain (e.g., optistyle.com).
+
+PAYMENT CHECKS:
+[ ] If testing, ensure Test Mode keys are used.
+[ ] If live, ensure Live Mode keys are used.
+[ ] Webhook secrets (if used) are configured.
+
+EMAIL SYSTEM:
+[ ] OAuth credentials for Gmail are valid (Refresh Token generated).
+[ ] Test email sent successfully from backend.
+
+================================================================================
+2. SECURITY CHECKLIST
+================================================================================
+
+ADMIN ACCESS:
+[ ] Only authorized emails have 'admin' role in Firestore 'users' collection.
+[ ] Admin routes in backend are protected by `verifyAdmin` middleware.
+
+FIRESTORE RULES:
+[ ] Rules deny read/write to 'analytics', 'audit_logs', 'system' collections for public users.
+[ ] Rules allow users to only read/write their OWN data.
+
+SECRETS:
+[ ] No API keys or secrets hardcoded in frontend JavaScript files.
+[ ] .env files are included in .gitignore.
+
+HTTPS:
+[ ] Frontend domain has SSL (HTTPS).
+[ ] Backend domain has SSL (HTTPS).
+
+================================================================================
+3. PERFORMANCE CHECKLIST
+================================================================================
+
+PAGE LOAD:
+[ ] Home page loads under 3 seconds on 4G.
+[ ] Images are lazy-loaded or optimized.
+
+MOBILE:
+[ ] Navbar works on mobile.
+[ ] Checkout form is usable on small screens.
+[ ] Product grid aligns correctly on mobile.
+
+ANIMATIONS:
+[ ] No laggy animations on scroll.
+[ ] Page transitions are smooth.
+
+================================================================================
+4. PAYMENT CHECKLIST (Live Test)
+================================================================================
+
+RAZORPAY POPUP:
+[ ] Click "Pay" -> Does the Razorpay modal open?
+[ ] Is the amount correct?
+
+PAYMENT VERIFICATION:
+[ ] Complete a transaction (real small amount or test mode).
+[ ] Does the success page appear?
+[ ] Does the order status update to "Processing" in Admin Panel?
+
+REFUND TEST:
+[ ] Request a refund from User Profile (if eligible).
+[ ] Admin approves refund.
+[ ] Does status change to "Refunded"?
+
+COD TEST:
+[ ] Place a Cash on Delivery order.
+[ ] Does success page appear?
+[ ] Does status show "COD Pending"?
+
+================================================================================
+5. EMAIL CHECKLIST
+================================================================================
+
+ADMIN ALERT:
+[ ] Does Admin receive an email when a new order is placed?
+
+USER CONFIRMATION:
+[ ] Does User receive an email immediately after payment?
+[ ] Is the PDF Invoice attached?
+[ ] Is the PDF Invoice content correct (Name, Amount, Items)?
+
+================================================================================
+6. ADMIN PANEL CHECKLIST
+================================================================================
+
+DASHBOARD:
+[ ] Statistics load correctly (Revenue, Orders count).
+[ ] Graphs/Charts (if any) render.
+
+UPDATES:
+[ ] Can change order status (e.g., Pending -> Shipped)?
+[ ] Can edit product details?
+
+REFUNDS:
+[ ] Can see refund requests?
+[ ] Can approve/reject?
+
+AUDIT LOGS:
+[ ] Are my actions (login, updates) appearing in the logs?
+
+================================================================================
+7. POST-DEPLOYMENT CHECKLIST (After Go-Live)
+================================================================================
+
+HOMEPAGE:
+[ ] Loads without errors.
+[ ] Images visible.
+
+LOGIN / SIGNUP:
+[ ] Create a new test user account.
+[ ] Login with existing account.
+
+FORGOT PASSWORD:
+[ ] Request password reset email.
+[ ] Click link in email -> Does it work?
+
+CHECKOUT:
+[ ] Add item to cart.
+[ ] Proceed to checkout.
+[ ] Fill address.
+[ ] Place order.
+
+ADMIN ACCESS:
+[ ] Verify /admin route is accessible only to admins.
+
+PDFs:
+[ ] Download Invoice from Order History.
+[ ] Generate Eye Test Certificate.
+
+================================================================================
+8. EMERGENCY ROLLBACK CHECKLIST
+================================================================================
+
+IF CRITICAL FAILURE OCCURS:
+
+PAUSE SITE:
+1. Log in to Admin Panel.
+2. Go to System / Settings.
+3. Enable "Maintenance Mode".
+4. If Admin Panel is broken, set maintenance mode via Environment Variable or Database directly.
+
+DISABLE CHECKOUT:
+1. If payments are wrong but site is okay, disable "Allow Checkout" in Admin Settings.
+
+RECOVER:
+1. Revert Git commit to the last stable version.
+2. Redeploy Frontend and/or Backend.
+3. Verify fixes.
+4. Disable Maintenance Mode.

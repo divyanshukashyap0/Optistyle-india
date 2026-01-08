@@ -1,0 +1,73 @@
+
+================================================================================
+FRONTEND DEVELOPER GUIDE
+================================================================================
+
+This guide explains the React/Vite frontend structure and workflow.
+
+================================================================================
+1. QUICK START
+================================================================================
+
+Command to run: `npm run dev`
+Local URL: http://localhost:5173
+
+Key Requirement:
+The `.env` file in the root directory must contain `VITE_API_URL=http://localhost:5000/api` for local development.
+
+================================================================================
+2. FOLDER STRUCTURE (src/)
+================================================================================
+
+/components   -> Reusable UI blocks (Buttons, Navbar, Inputs).
+/pages        -> Full page views (Home, Shop, Checkout).
+/context      -> State management (Cart, Authentication).
+/services     -> API calls (Axios setup in api.ts).
+/config       -> Environment variable loading (env.ts).
+
+================================================================================
+3. CONFIGURATION & SECRETS
+================================================================================
+
+We use a centralized config file: `src/config/env.ts`.
+Do not use `import.meta.env` directly in components. Import from the config file instead.
+
+Example:
+import { ENV } from '../config/env';
+console.log(ENV.API_URL);
+
+Rules:
+1. All frontend environment variables MUST start with `VITE_`.
+2. Variables without `VITE_` are invisible to the browser (security feature).
+
+================================================================================
+4. KEY FEATURES IMPLEMENTATION
+================================================================================
+
+Authentication:
+- Handled by Firebase Client SDK (`src/firebase.ts`).
+- Auth state is managed in `AuthContext.tsx`.
+
+Payments:
+- Triggered in `Checkout.tsx`.
+- Uses `src/services/paymentService.ts` to load Razorpay script.
+- Verifies payment signature via Backend API.
+
+Styling:
+- Tailwind CSS is used for all styling.
+- Global styles are in `src/index.css`.
+
+================================================================================
+5. BUILDING FOR PRODUCTION
+================================================================================
+
+Command: `npm run build`
+
+Output: `dist/` folder.
+This folder contains the optimized HTML/CSS/JS ready for deployment.
+
+Troubleshooting Builds:
+- If build fails, check for TypeScript errors in the terminal.
+- Ensure all imported files actually exist (case-sensitive paths!).
+
+================================================================================

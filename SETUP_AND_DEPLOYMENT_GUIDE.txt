@@ -1,0 +1,92 @@
+
+================================================================================
+OptiStyle - COMPLETE SETUP & DEPLOYMENT GUIDE
+================================================================================
+
+This document is your master guide for running the project locally and deploying it to the web.
+
+PREREQUISITES:
+- Node.js (v18 or higher)
+- npm (v9 or higher)
+- Git
+
+================================================================================
+PART 1: LOCAL INSTALLATION
+================================================================================
+
+1. CLONE & INSTALL
+   Open your terminal in the project folder and run:
+   > npm install
+
+   (This installs dependencies for both frontend and backend).
+
+2. ENVIRONMENT SETUP
+   - Create a file named `.env` in the root directory.
+   - Copy contents from `.env.example`.
+   - Fill in your real API keys (Firebase, Razorpay, etc.).
+   *See ENV_SETUP_README.txt for details.*
+
+3. START THE BACKEND
+   Open a NEW terminal window and run:
+   > npm run server
+
+   Success output: "Backend running on http://localhost:5000"
+
+4. START THE FRONTEND
+   Open a NEW terminal window and run:
+   > npm run dev
+
+   Success output: "Local: http://localhost:5173"
+
+5. VERIFY
+   Open http://localhost:5173 in your browser. The site should load.
+
+================================================================================
+PART 2: PRODUCTION DEPLOYMENT
+================================================================================
+
+The app consists of two parts that must be hosted separately.
+
+--- A. DEPLOYING FRONTEND (Netlify) ---
+
+1. Push your code to GitHub.
+2. Log in to Netlify -> "Add new site" -> "Import from Git".
+3. Settings:
+   - Build Command: `npm run build`
+   - Publish Directory: `dist`
+4. Environment Variables (Site Settings > Env):
+   - Add all variables starting with `VITE_`.
+   - IMPORTANT: Change `VITE_API_URL` to your Live Backend URL (see below).
+5. Deploy.
+
+--- B. DEPLOYING BACKEND (Render / Railway) ---
+
+1. Create a Web Service on your host (e.g., Render).
+2. Connect your GitHub repo.
+3. Settings:
+   - Build Command: `npm install`
+   - Start Command: `npm run server`
+4. Environment Variables:
+   - Add all Backend variables (PORT, FIREBASE_..., RAZORPAY_...).
+   - Do NOT wrap Private Key in quotes in Render dashboard (usually they handle multiline automatically, check host docs).
+5. Deploy.
+
+================================================================================
+PART 3: POST-DEPLOYMENT CHECKS
+================================================================================
+
+1. Check Frontend: Does the homepage load?
+2. Check API Connection: Open Browser Console (F12). Are there network errors?
+3. Check Login: Can you sign in via Firebase?
+4. Check Checkout: Click "Pay". Does the Razorpay modal open?
+
+================================================================================
+COMMON MISTAKES
+================================================================================
+
+- Forgot to restart `npm run dev` after changing `.env`.
+- Frontend trying to connect to `localhost` when deployed (Fix `VITE_API_URL`).
+- Firebase Security Rules blocking access (Check Firestore Console).
+- Missing `public/_redirects` file (Causes 404 on refresh in Netlify).
+
+================================================================================

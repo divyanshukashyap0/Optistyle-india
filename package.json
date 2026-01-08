@@ -1,0 +1,53 @@
+{
+  "name": "optistyle",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "ts-node --esm --experimental-specifier-resolution=node backend/server.ts",
+    "build:backend": "tsc -p backend/tsconfig.json",
+    "start:backend": "node --experimental-specifier-resolution=node dist/backend/server.js",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "framer-motion": "^12.24.10",
+    "lucide-react": "^0.562.0",
+    "react-router-dom": "^7.11.0",
+    "firebase": "^12.7.0",
+    "express": "^5.2.1",
+    "cors": "^2.8.5",
+    "razorpay": "^2.9.6",
+    "pdfkit": "^0.17.2",
+    "nodemailer": "^6.9.9",
+    "google-auth-library": "^9.6.3",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
+    "axios": "^1.13.2",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^13.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/node": "^20.11.20",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/pdfkit": "^0.13.3",
+    "@types/nodemailer": "^6.4.14",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "vite": "^5.1.4",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35"
+  }
+}
