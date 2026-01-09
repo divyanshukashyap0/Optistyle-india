@@ -109,7 +109,7 @@ export const Home: React.FC = () => {
                 className="relative z-10 w-full max-w-md aspect-[3/4] bg-slate-200 rounded-[2rem] overflow-hidden shadow-2xl shadow-slate-200"
              >
                  <img 
-                    src="https://images.unsplash.com/photo-1570221377848-18e00742f534?q=80&w=989&auto=format&fit=crop"
+                    src="assets\Man wearing stylish glasses.webp"
                     alt="Man wearing stylish glasses"
                     className="w-full h-full object-cover scale-105 hover:scale-100 transition-transform duration-[1.5s]"
                  />

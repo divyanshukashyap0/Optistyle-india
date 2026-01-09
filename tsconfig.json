@@ -30,5 +30,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "types.ts"]
+  "include": ["src", "backend", "types.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

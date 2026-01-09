@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { Package, Clock, Download, Undo2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { api, requestOrderRefund } from '../services/api';
 import { generateInvoice } from '../services/pdfService';
-import { Order } from '../../types';
+import { Order } from '../types';
 import { Button } from '../components/Button';
 
 export const Orders: React.FC = () => {

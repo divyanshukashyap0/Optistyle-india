@@ -52,9 +52,6 @@ export const ENV = {
     CLIENT_SECRET: getEnv('GMAIL_CLIENT_SECRET', false),
     REFRESH_TOKEN: getEnv('GMAIL_REFRESH_TOKEN', false),
     SENDER: getEnv('GMAIL_SENDER', false),
-    PASSWORD: getEnv('GMAIL_APP_PASSWORD', false),
-    SMTP_HOST: getEnv('SMTP_HOST', false),
-    SMTP_PORT: getEnv('SMTP_PORT', false),
     ADMIN: getEnv('ADMIN_EMAIL', false, 'optistyle.india@gmail.com'),
   },
 

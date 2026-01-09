@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Address } from '../../types';
+import { Address } from '../types';
 import { getUserAddresses, deleteUserAddress } from '../services/addressService';
 import { MapPin, Trash2, Plus, CheckCircle, Loader } from 'lucide-react';
 import { Button } from './Button';

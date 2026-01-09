@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminRefundRequests, processAdminRefund } from '../../services/api';
-import { Order } from '../../../types';
+import { Order } from '../../types';
 import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '../Button';
 

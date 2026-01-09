@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DollarSign, ShoppingBag, Users, AlertTriangle, TrendingUp, Clock, CreditCard, Banknote } from 'lucide-react';
 import { getDashboardStats, getAdminOrders } from '../../services/adminService';
-import { Order } from '../../../types';
+import { Order } from '../../types';
 
 export const AdminOverview: React.FC<{ onViewChange: (view: any) => void }> = ({ onViewChange }) => {
   const [stats, setStats] = useState<any>(null);

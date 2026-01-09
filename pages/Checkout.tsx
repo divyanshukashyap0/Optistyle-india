@@ -364,7 +364,7 @@ export const Checkout: React.FC = () => {
                             exit={{ height: 0 }}
                             className="overflow-hidden border-t border-slate-200"
                         >
-                            <SummaryContent items={state.items} total={state.total} />
+                            <SummaryContent items={state.items} total=₹{state.total} />
                         </motion.div>
                     )}
                 </AnimatePresence>

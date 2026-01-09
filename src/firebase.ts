@@ -14,7 +14,7 @@ const firebaseConfig = {
 };
 
 let auth: Auth | undefined;
-let db: Firestore | undefined; // Added Firestore export
+let db: Firestore; // Added Firestore export
 
 // Only initialize if we have a valid API key to avoid "auth/invalid-api-key" error
 if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'undefined' && !firebaseConfig.apiKey.includes('placeholder')) {

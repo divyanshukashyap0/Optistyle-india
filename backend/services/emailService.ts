@@ -4,23 +4,12 @@ import { Buffer } from 'buffer';
 import { ENV } from '../config/env.ts';
 import type { Order } from '../../types.ts'; // Import from shared types
 
+/**
+ * Creates a Nodemailer transporter using Gmail OAuth2.
+ */
 const createTransporter = () => {
-  const sender = ENV.EMAIL.SENDER;
-  const password = ENV.EMAIL.PASSWORD;
-  if (sender && password) {
-    const host = ENV.EMAIL.SMTP_HOST || 'smtp.gmail.com';
-    const port = ENV.EMAIL.SMTP_PORT ? parseInt(ENV.EMAIL.SMTP_PORT, 10) : 465;
-    const secure = port === 465;
-    return nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: { user: sender, pass: password },
-    } as nodemailer.TransportOptions);
-  }
-
   if (!ENV.EMAIL.CLIENT_ID || !ENV.EMAIL.CLIENT_SECRET || !ENV.EMAIL.REFRESH_TOKEN || !ENV.EMAIL.SENDER) {
-    console.warn("⚠️ [Email Service] Missing email credentials in .env. Emailing will be disabled.");
+    console.warn("⚠️ [Email Service] Missing OAuth credentials in .env. Emailing will be disabled.");
     return null;
   }
 
@@ -36,12 +25,7 @@ const createTransporter = () => {
   } as nodemailer.TransportOptions);
 };
 
-let cachedTransporter: nodemailer.Transporter | null | undefined = undefined;
-const getTransporter = () => {
-  if (cachedTransporter !== undefined) return cachedTransporter;
-  cachedTransporter = createTransporter();
-  return cachedTransporter;
-};
+const transporter = createTransporter();
 
 // --- TEMPLATES ---
 
@@ -120,11 +104,7 @@ const getUserEmailTemplate = (order: Order) => `
 // --- MAIN FUNCTION ---
 
 export const sendOrderEmails = async (orderData: Order, pdfBuffer: Buffer) => {
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn('[Email Service] Email is disabled; skipping transactional emails.');
-    return;
-  }
+  if (!transporter) return;
 
   const attachments = [
     {
@@ -158,12 +138,6 @@ export const sendOrderEmails = async (orderData: Order, pdfBuffer: Buffer) => {
     console.log(`[Email] Customer confirmation sent.`);
 
   } catch (error) {
-    const message = (error as any)?.message ? String((error as any).message) : String(error);
-    if ((error as any)?.code === 'EAUTH' && message.includes('invalid_client')) {
-      console.error('❌ [Email Error] Gmail OAuth client is invalid. Check GMAIL_CLIENT_ID/GMAIL_CLIENT_SECRET and regenerate GMAIL_REFRESH_TOKEN.');
-      console.error('❌ [Email Error] Or set GMAIL_APP_PASSWORD to use SMTP instead of OAuth.');
-      return;
-    }
     console.error("❌ [Email Error] Failed to send transactional emails:", error);
   }
 };

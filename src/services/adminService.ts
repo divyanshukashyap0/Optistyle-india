@@ -96,20 +96,10 @@ export const toggleUserStatus = async (id: string) => {
 // --- STATS SERVICE ---
 export const getDashboardStats = async () => {
   const revenue = ordersDb.reduce((acc, o) => acc + o.total, 0);
-  const paymentSplit = {
-    online: ordersDb.filter(o => o.paymentMethod === 'ONLINE').length,
-    cod: ordersDb.filter(o => o.paymentMethod === 'COD').length,
-  };
-  const pendingCODRevenue = ordersDb
-    .filter(o => o.paymentMethod === 'COD' && o.status !== 'delivered' && o.status !== 'refunded' && o.status !== 'cancelled')
-    .reduce((acc, o) => acc + o.total, 0);
-
   return {
     totalRevenue: revenue,
-    pendingCODRevenue,
     totalOrders: ordersDb.length,
-    paymentSplit,
-    pendingOrders: ordersDb.filter(o => o.status === 'pending' || o.status === 'cod_pending').length,
+    pendingOrders: ordersDb.filter(o => o.status === 'pending').length,
     totalUsers: usersDb.length,
     lowStock: 2 // Mocked
   };
