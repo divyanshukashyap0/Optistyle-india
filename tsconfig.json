@@ -23,7 +23,8 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    
+    "exclude": ["backend", "node_modules", "dist"],
+
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
@@ -32,4 +33,5 @@
   },
   "include": ["src", "backend", "types.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
+  
 }
