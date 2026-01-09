@@ -91,7 +91,7 @@ export const CartDrawer: React.FC = () => {
               <div className="p-6 border-t border-slate-100 bg-slate-50">
                 <div className="flex justify-between mb-4">
                   <span className="text-slate-600">Subtotal</span>
-                  <span className="text-xl font-bold font-serif">${state.total}</span>
+                  <span className="text-xl font-bold font-serif">₹{state.total}</span>
                 </div>
                 <Link to="/checkout" onClick={() => dispatch({ type: 'TOGGLE_CART' })}>
                   <Button className="w-full" size="lg">

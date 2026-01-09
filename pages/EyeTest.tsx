@@ -625,7 +625,7 @@ const AcuityTestPhase: React.FC<{ eye: string, onComplete: (score: number) => vo
        };
        window.addEventListener('keydown', handleKeyDown);
        return () => window.removeEventListener('keydown', handleKeyDown);
-   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+   }, []);
 
    const randomize = () => {
        const dirs: any[] = ['up', 'down', 'left', 'right'];

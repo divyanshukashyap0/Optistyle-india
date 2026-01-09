@@ -1,4 +1,4 @@
-import { Product, Order, User } from '../types';
+import { Product, Order, User } from '../../types';
 import { PRODUCTS, MOCK_USER } from '../constants';
 
 // --- MOCK DATABASE STATE ---
@@ -55,7 +55,7 @@ let usersDb: User[] = [
   MOCK_USER as User,
   { id: 'u456', name: 'Amit Verma', email: 'amit@test.com', role: 'user' },
   { id: 'u789', name: 'Priya Singh', email: 'priya@test.com', role: 'user' },
-  { id: 'admin1', name: 'System Admin', email: 'admin@optistyle.com', role: 'admin' }
+  { id: 'admin1', name: 'System Admin', email: 'optistyle.india@gmail.com', role: 'admin' }
 ];
 
 // --- PRODUCT SERVICES ---
@@ -96,10 +96,20 @@ export const toggleUserStatus = async (id: string) => {
 // --- STATS SERVICE ---
 export const getDashboardStats = async () => {
   const revenue = ordersDb.reduce((acc, o) => acc + o.total, 0);
+  const paymentSplit = {
+    online: ordersDb.filter(o => o.paymentMethod === 'ONLINE').length,
+    cod: ordersDb.filter(o => o.paymentMethod === 'COD').length,
+  };
+  const pendingCODRevenue = ordersDb
+    .filter(o => o.paymentMethod === 'COD' && o.status !== 'delivered' && o.status !== 'refunded' && o.status !== 'cancelled')
+    .reduce((acc, o) => acc + o.total, 0);
+
   return {
     totalRevenue: revenue,
+    pendingCODRevenue,
     totalOrders: ordersDb.length,
-    pendingOrders: ordersDb.filter(o => o.status === 'pending').length,
+    paymentSplit,
+    pendingOrders: ordersDb.filter(o => o.status === 'pending' || o.status === 'cod_pending').length,
     totalUsers: usersDb.length,
     lowStock: 2 // Mocked
   };

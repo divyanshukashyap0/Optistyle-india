@@ -2,7 +2,7 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { VisionEstimation } from "./eyeTestLogic";
-import { CartItem } from "../types";
+import { CartItem } from "../../types";
 
 // --- THEME CONSTANTS ---
 const COLORS = {
@@ -17,6 +17,28 @@ const COLORS = {
 };
 
 // --- HELPER FUNCTIONS ---
+const fitTextToWidth = (
+    doc: any,
+    text: string,
+    maxWidth: number,
+    fontSize: number,
+    minFontSize = 7
+) => {
+    let size = fontSize;
+    doc.setFontSize(size);
+    while (size > minFontSize && doc.getTextWidth(text) > maxWidth) {
+        size -= 0.5;
+        doc.setFontSize(size);
+    }
+    return size;
+};
+
+const splitToWidth = (doc: any, text: string, maxWidth: number) => {
+    if (!text) return [''];
+    if (typeof doc.splitTextToSize === 'function') return doc.splitTextToSize(text, maxWidth);
+    return [text];
+};
+
 const drawHeader = (doc: any, pageWidth: number) => {
     // Top Bar
     doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
@@ -36,8 +58,8 @@ const drawHeader = (doc: any, pageWidth: number) => {
     // Company Contact (Right aligned)
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Plot 42, Hitech City", pageWidth - 20, 24, { align: "right" });
-    doc.text("Hyderabad, India 500081", pageWidth - 20, 29, { align: "right" });
+    doc.text("Eye Care Optical, Near Gahoi Vatika", pageWidth - 20, 24, { align: "right" });
+    doc.text(" Datia-475661, Madhya Pradesh", pageWidth - 20, 29, { align: "right" });
     doc.text("Support: +91 80053 43226", pageWidth - 20, 34, { align: "right" });
     
     // Horizontal Line
@@ -110,20 +132,28 @@ export const generateEyeTestCertificate = async (
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(COLORS.secondary[0], COLORS.secondary[1], COLORS.secondary[2]);
-    (doc as any).text(name.toUpperCase(), 30, yPos + 18);
+    const nameText = (name || '').toUpperCase();
+    doc.setFont("helvetica", "bold");
+    fitTextToWidth(doc, nameText, 65, 11, 7);
+    doc.text(nameText, 30, yPos + 18);
 
     // Email if present
     if (extras?.email) {
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(COLORS.textLight[0], COLORS.textLight[1], COLORS.textLight[2]);
-        doc.text(extras.email, 30, yPos + 23);
+        const emailText = String(extras.email);
+        doc.setFont("helvetica", "normal");
+        fitTextToWidth(doc, emailText, 65, 8, 6);
+        doc.text(emailText, 30, yPos + 23);
     }
     
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(COLORS.secondary[0], COLORS.secondary[1], COLORS.secondary[2]);
     doc.text(`${age} Yrs / ${gender}`, 100, yPos + 18);
+    doc.setFont("helvetica", "bold");
+    fitTextToWidth(doc, certId, 40, 11, 7);
     doc.text(certId, 150, yPos + 18);
     
     // Divider inside card
@@ -182,32 +212,42 @@ export const generateEyeTestCertificate = async (
     const finalY = doc.lastAutoTable.finalY + 20;
     
     // Verification Box
+    const verificationBoxHeight = 60;
+    const qrSize = 35;
+    const qrX = 20 + (pageWidth - 40) - qrSize - 10;
+    const qrYPos = finalY + (verificationBoxHeight - qrSize) / 2;
+    const leftTextX = 30;
+    const leftTextMaxWidth = qrX - leftTextX - 12;
+
     doc.setDrawColor(COLORS.border[0], COLORS.border[1], COLORS.border[2]);
-    doc.rect(20, finalY, pageWidth - 40, 50);
+    doc.rect(20, finalY, pageWidth - 40, verificationBoxHeight);
     
     // Left side of verification box: Text
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Scan to Verify", 30, finalY + 15);
+    doc.text("Scan to Verify", leftTextX, finalY + 15);
     
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(COLORS.textLight[0], COLORS.textLight[1], COLORS.textLight[2]);
-    doc.text("This QR code contains the digital signature", 30, finalY + 22);
-    doc.text("of this test result. Scan with any QR reader", 30, finalY + 27);
-    doc.text("to validate patient details and scores.", 30, finalY + 32);
+    const verificationText = [
+        "This QR code contains the digital signature of this test result.",
+        "Scan with any QR reader to validate patient details and scores."
+    ].join(' ');
+    const verificationLines = splitToWidth(doc, verificationText, leftTextMaxWidth);
+    doc.text(verificationLines, leftTextX, finalY + 22);
 
     // --- DIGITAL SIGNATURE ---
     doc.setFont("times", "italic");
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setTextColor(COLORS.secondary[0], COLORS.secondary[1], COLORS.secondary[2]);
-    doc.text("OptiStyle Owners", 100, finalY + 25);
+    doc.text("OptiStyle Owners", qrX - 8, finalY + 44, { align: "right" });
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(COLORS.textLight[0], COLORS.textLight[1], COLORS.textLight[2]);
-    doc.text("AUTHORIZED DIGITAL SIGNATURE", 100, finalY + 32);
-    doc.text("Valid across all OptiStyle branches", 100, finalY + 36);
+    doc.text("AUTHORIZED DIGITAL SIGNATURE", qrX - 8, finalY + 50, { align: "right" });
+    doc.text("Valid across all OptiStyle branches", qrX - 8, finalY + 54, { align: "right" });
     
     // Generate QR Code
     // Data format: Simple Key-Value text for universal readability
@@ -221,49 +261,42 @@ export const generateEyeTestCertificate = async (
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64data = reader.result as string;
-            // Place QR Code on the right side of the verification box
-            // Box width is (pageWidth - 40). Box starts at 20.
-            // QR Size 35x35
-            // X Position = 20 + (pageWidth - 40) - 35 - 10 (padding)
-            const qrSize = 35;
-            const qrX = 20 + (pageWidth - 40) - qrSize - 10;
-            const qrYPos = finalY + 7.5; // Vertically centered in 50 height box (approx)
-            
             doc.addImage(base64data, 'PNG', qrX, qrYPos, qrSize, qrSize);
             
-            finishPDF(doc, pageWidth, pageHeight, certId, finalY + 60);
+            finishPDF(doc, pageWidth, pageHeight, certId, finalY + verificationBoxHeight + 12);
         };
         reader.readAsDataURL(blob);
     } catch (e) {
         console.warn("QR Code generation failed, generating PDF without it.");
-        finishPDF(doc, pageWidth, pageHeight, certId, finalY + 60);
+        finishPDF(doc, pageWidth, pageHeight, certId, finalY + verificationBoxHeight + 12);
     }
 };
 
 const finishPDF = (doc: any, pageWidth: number, pageHeight: number, certId: string, startY: number) => {
     // --- DISCLAIMER ---
-    const disclaimerY = Math.min(startY, pageHeight - 45); // Ensure it doesn't push off page
+    const disclaimerText1 = "This certificate represents the results of an AI-assisted vision screening. It is NOT a medical prescription.";
+    const disclaimerText2 = "Please consult a certified optometrist or ophthalmologist for a comprehensive eye exam before purchasing prescription lenses.";
     
     doc.setDrawColor(252, 165, 165); // Red 300
     doc.setFillColor(254, 242, 242); // Red 50
-    // Fix: Added missing ry parameter (2, 2)
-    doc.roundedRect(20, disclaimerY, pageWidth - 40, 20, 2, 2, 'FD');
     
     doc.setTextColor(185, 28, 28); // Red 700
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
+    const bodyMaxWidth = pageWidth - 50;
+    const lines1 = splitToWidth(doc, disclaimerText1, bodyMaxWidth);
+    const lines2 = splitToWidth(doc, disclaimerText2, bodyMaxWidth);
+    const lineHeight = 4;
+    const boxHeight = Math.max(20, 8 + 5 + ((lines1.length + lines2.length) * lineHeight) + 4);
+    const disclaimerY = Math.min(startY, pageHeight - (boxHeight + 20));
+    doc.roundedRect(20, disclaimerY, pageWidth - 40, boxHeight, 2, 2, 'FD');
     doc.text("MEDICAL DISCLAIMER:", 25, disclaimerY + 8);
     
     doc.setFont("helvetica", "normal");
     doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
-    doc.text(
-        "This certificate represents the results of an AI-assisted vision screening. It is NOT a medical prescription.",
-        25, disclaimerY + 13
-    );
-    doc.text(
-        "Please consult a certified optometrist or ophthalmologist for a comprehensive eye exam before purchasing prescription lenses.",
-        25, disclaimerY + 17
-    );
+    const textStartY = disclaimerY + 13;
+    doc.text(lines1, 25, textStartY);
+    doc.text(lines2, 25, textStartY + (lines1.length * lineHeight));
 
     drawFooter(doc, pageWidth, pageHeight);
     doc.save(`OptiStyle_Report_${certId}.pdf`);

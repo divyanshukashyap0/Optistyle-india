@@ -133,9 +133,10 @@ export const TermsConditions: React.FC = () => {
             <p className="text-slate-600 mb-6">
                 If you are confused about any rule, please ask us before buying.
             </p>
-            <Link to="/">
+            <Link to="/contact">
                 <button className="bg-brand-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-700 transition-colors flex items-center gap-2">
                     <HelpCircle className="w-5 h-5" /> Contact Support
+                    
                 </button>
             </Link>
           </section>

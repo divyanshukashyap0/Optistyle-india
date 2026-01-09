@@ -1,4 +1,4 @@
-import { Product, LensOption } from './types';
+import { Product, LensOption } from '../types.ts';
 
 // --- HELPER DATA FOR GENERATION ---
 const ADJECTIVES = [

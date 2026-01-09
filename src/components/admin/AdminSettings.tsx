@@ -5,7 +5,7 @@ import { Save, Bot, Store, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
 export const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState({
       storeName: 'OptiStyle India',
-      supportEmail: 'support@optistyle.in',
+      supportEmail: 'optistyle.india@gmail.com',
       aiEnabled: true,
       maintenanceMode: false
   });

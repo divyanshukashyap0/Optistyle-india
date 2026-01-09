@@ -35,6 +35,10 @@
     "firebase-admin": "^13.6.0"
   },
   "devDependencies": {
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.23.0",
+    "@typescript-eslint/parser": "^8.23.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/node": "^20.11.20",

@@ -1,7 +1,7 @@
 
-import { Request, Response } from 'express';
-import { getRazorpayClient } from '../clients/razorpayClient';
-import { generateOrdersCSV, generateRefundsCSV } from '../utils/exportUtils';
+import type { Request, Response } from 'express';
+import { getRazorpayClient } from '../clients/razorpayClient.ts';
+import { generateOrdersCSV, generateRefundsCSV } from '../utils/exportUtils.ts';
 import { 
     getAllOrders, 
     getOrderById, 
@@ -17,8 +17,8 @@ import {
     getPendingApprovals,
     updateApprovalStatus,
     getApprovalById
-} from '../services/db';
-import { AuthRequest } from '../middleware/authMiddleware';
+} from '../services/db.ts';
+import type { AuthRequest } from '../middleware/authMiddleware.ts';
 
 // --- APPROVAL WORKFLOW ---
 

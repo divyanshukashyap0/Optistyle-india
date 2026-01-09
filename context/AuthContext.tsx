@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Map Firebase User to App User
   const mapUser = (fbUser: FirebaseUser): User => {
     // In a real app, you might fetch claims or a Firestore document for roles.
-    const role = fbUser.email === 'admin@optistyle.com' ? 'admin' : 'user';
+    const role = fbUser.email === 'optistyle.india@gmail.com' ? 'admin' : 'user';
     return {
       id: fbUser.uid,
       name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',

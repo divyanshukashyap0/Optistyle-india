@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminOrders, updateOrderStatus } from '../../services/adminService';
 import { exportAdminData } from '../../services/api';
-import { Order } from '../../types';
+import { Order } from '../../../types';
 import { Search, Eye, Filter, Download, FileSpreadsheet } from 'lucide-react';
 import { Button } from '../Button';
 
@@ -51,6 +51,7 @@ export const AdminOrders: React.FC = () => {
               >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
+                  <option value="cod_pending">COD Pending</option>
                   <option value="processing">Processing</option>
                   <option value="shipped">Shipped</option>
                   <option value="delivered">Delivered</option>
@@ -97,6 +98,7 @@ export const AdminOrders: React.FC = () => {
                           <select 
                             className={`p-1 rounded text-xs font-bold uppercase border-none outline-none cursor-pointer ${
                                 order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                order.status === 'cod_pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                                 order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                                 order.status === 'shipped' ? 'bg-purple-100 text-purple-700' :
                                 'bg-blue-100 text-blue-700'
@@ -105,6 +107,7 @@ export const AdminOrders: React.FC = () => {
                             onChange={(e) => handleStatusChange(order.id, e.target.value as any)}
                           >
                              <option value="pending">Pending</option>
+                             <option value="cod_pending">COD Pending</option>
                              <option value="processing">Processing</option>
                              <option value="shipped">Shipped</option>
                              <option value="delivered">Delivered</option>

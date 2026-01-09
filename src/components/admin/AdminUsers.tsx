@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminUsers } from '../../services/adminService';
-import { User } from '../../types';
+import { User } from '../../../types';
 import { Search, Mail, Shield, ShieldOff, MoreHorizontal } from 'lucide-react';
 
 export const AdminUsers: React.FC = () => {

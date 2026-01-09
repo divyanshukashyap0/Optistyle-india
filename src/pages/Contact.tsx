@@ -25,7 +25,7 @@ export const Contact: React.FC = () => {
 
     try {
       // Using FormSubmit with AJAX to prevent page redirect
-      const response = await fetch("https://formsubmit.co/ajax/divyanshu00884466@gmail.com", {
+      const response = await fetch("https://formsubmit.co/ajax/optistyle.india@gmail.com", {
         method: "POST",
         headers: { 
           'Content-Type': 'application/json',
@@ -89,7 +89,8 @@ export const Contact: React.FC = () => {
                   <div>
                     <p className="font-medium text-slate-900">Email</p>
                     <p className="text-slate-500 text-sm mb-1">For orders & general feedback</p>
-                    <p className="font-bold text-brand-600">support@optistyle.in</p>
+                    <p className="font-bold text-brand-600">optistyle.india@gmail.com
+</p>
                   </div>
                 </div>
 
@@ -101,7 +102,7 @@ export const Contact: React.FC = () => {
                     <p className="font-medium text-slate-900">Headquarters</p>
                     <p className="text-slate-600 text-sm leading-relaxed">
                       Eye Care Optical, Near Gahoi Vatika, Peetambra Road,<br/>
-                      Madhapur, Hyderabad, Telangana 500081
+                       Datia-475661, Madhya Pradesh
                     </p>
                   </div>
                 </div>

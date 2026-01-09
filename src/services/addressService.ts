@@ -1,7 +1,7 @@
 
 import { db } from '../firebase'; 
 import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
-import { Address } from '../types';
+import { Address } from '../../types';
 
 const getAddressCollection = (userId: string) => {
     // If DB isn't initialized (missing keys), this will throw.

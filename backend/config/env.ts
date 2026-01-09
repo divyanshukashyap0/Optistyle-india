@@ -1,11 +1,20 @@
 
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 
-// Load .env file from backend directory
-// We use process.cwd() to locate .env in the root of the backend folder, avoiding __dirname TS issues
-// Using type assertion for process to avoid TS errors if @types/node isn't perfectly matched in context
-dotenv.config({ path: path.resolve((process as any).cwd(), '.env') });
+const cwd = (process as any).cwd() as string;
+const candidates =
+  path.basename(cwd) === 'backend'
+    ? [path.resolve(cwd, '.env'), path.resolve(cwd, '..', '.env')]
+    : [path.resolve(cwd, 'backend', '.env'), path.resolve(cwd, '.env')];
+
+const envPath = candidates.find((p) => fs.existsSync(p));
+if (envPath) {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 const getEnv = (key: string, required: boolean = false, fallback: string = ''): string => {
   const value = process.env[key];
@@ -43,7 +52,10 @@ export const ENV = {
     CLIENT_SECRET: getEnv('GMAIL_CLIENT_SECRET', false),
     REFRESH_TOKEN: getEnv('GMAIL_REFRESH_TOKEN', false),
     SENDER: getEnv('GMAIL_SENDER', false),
-    ADMIN: getEnv('ADMIN_EMAIL', false, 'admin@optistyle.com'),
+    PASSWORD: getEnv('GMAIL_APP_PASSWORD', false),
+    SMTP_HOST: getEnv('SMTP_HOST', false),
+    SMTP_PORT: getEnv('SMTP_PORT', false),
+    ADMIN: getEnv('ADMIN_EMAIL', false, 'optistyle.india@gmail.com'),
   },
 
   // External APIs

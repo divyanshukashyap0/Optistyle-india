@@ -128,7 +128,8 @@ export const PrivacyPolicy: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center gap-3 text-slate-600">
                     <Mail className="w-5 h-5 text-brand-600" />
-                    <span>support@optistyle.in</span>
+                    <span>optistyle.india@gmail.com
+</span>
                 </div>
                 <div className="flex items-center gap-3 text-slate-600">
                     <Phone className="w-5 h-5 text-brand-600" />

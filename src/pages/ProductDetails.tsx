@@ -5,7 +5,7 @@ import { PRODUCTS, LENS_OPTIONS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { Button } from '../components/Button';
 import { Star, Check, UploadCloud } from 'lucide-react';
-import { LensOption } from '../types';
+import { LensOption } from '../../types';
 import { PageTransition } from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../components/Skeleton';

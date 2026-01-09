@@ -1,5 +1,5 @@
 import type { Product, Order, User } from '../../types.ts';
-import { MOCK_USER } from '../../constants.ts';
+import { MOCK_USER } from '../../src/constants.ts';
 import { getAllOrders, getAnalyticsData, getAllProducts, addProductToDB, updateProductInDB, deleteProductFromDB } from './db.ts';
 
 // --- PRODUCT SERVICES ---
@@ -42,7 +42,7 @@ let usersDb: User[] = [
   MOCK_USER as User,
   { id: 'u456', name: 'Amit Verma', email: 'amit@test.com', role: 'user' },
   { id: 'u789', name: 'Priya Singh', email: 'priya@test.com', role: 'user' },
-  { id: 'admin1', name: 'System Admin', email: 'admin@optistyle.com', role: 'admin' }
+  { id: 'admin1', name: 'System Admin', email: 'optistyle.india@gmail.com', role: 'admin' }
 ];
 
 export const getAdminUsers = async () => [...usersDb];

@@ -5,7 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import PDFDocument from 'pdfkit';
-// import { generateAIResponse } from './services/deepseekClient';
+import { generateAIResponse } from './services/deepseekClient.ts';
 import paymentRoutes from './routes/payment.routes.ts';
 import adminRoutes from './routes/admin.routes.ts';
 import addressRoutes from './routes/address.routes.ts';

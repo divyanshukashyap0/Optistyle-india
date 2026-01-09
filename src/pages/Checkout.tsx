@@ -60,6 +60,13 @@ export const Checkout: React.FC = () => {
 
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({});
 
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (state.items.length === 0) {
+      navigate('/shop');
+    }
+  }, [state.items, navigate]);
+
   // Debounced Delivery Check
   useEffect(() => {
     const checkPin = async () => {
@@ -195,7 +202,7 @@ export const Checkout: React.FC = () => {
 
   const handleWhatsAppConfirm = () => {
       const message = `Hi OptiStyle, I confirm my order #${orderId}. Delivery to: ${formData.firstName}, ${formData.address}, ${formData.city} - ${formData.zip}. Contact: ${formData.phone}`;
-      const url = `https://wa.me/919876543210?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/918005343226?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
   };
 

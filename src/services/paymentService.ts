@@ -126,6 +126,7 @@ export const startPayment = async (details: PaymentDetails): Promise<{ success: 
 
   } catch (err: any) {
     console.error("Payment Start Error:", err);
-    return { success: false, error: err.message || "Something went wrong" };
+    const errorMessage = err.response?.data?.message || err.message || "Something went wrong";
+    return { success: false, error: errorMessage };
   }
 };

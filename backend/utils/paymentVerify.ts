@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { RAZORPAY_CONFIG } from '../clients/razorpayClient';
+import { RAZORPAY_CONFIG } from '../clients/razorpayClient.ts';
 
 /**
  * Verifies the Razorpay signature using HMAC SHA256.

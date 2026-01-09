@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '../types';
+import { User } from '../../types';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -10,7 +10,7 @@ import {
   sendPasswordResetEmail,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 interface AuthContextType {
@@ -32,9 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   // Map Firebase User to App User
-  const mapUser = (fbUser: FirebaseUser): User => {
-    // In a real app, you might fetch claims or a Firestore document for roles.
-    const role = fbUser.email === 'admin@optistyle.com' ? 'admin' : 'user';
+  const mapUser = (fbUser: FirebaseUser, role: User['role']): User => {
     return {
       id: fbUser.uid,
       name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
@@ -50,16 +48,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      if (fbUser) {
-        setUser(mapUser(fbUser));
-      } else {
-        setUser(null);
+    let cancelled = false;
+
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (!fbUser) {
+        if (!cancelled) {
+          setUser(null);
+          setIsLoading(false);
+        }
+        return;
       }
-      setIsLoading(false);
+
+      let role: User['role'] = fbUser.email === 'optistyle.india@gmail.com' ? 'admin' : 'user';
+
+      if (db) {
+        try {
+          const userRef = doc(db, "users", fbUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const data = userSnap.data() as any;
+            if (data?.role === 'admin' || data?.role === 'user') {
+              role = data.role;
+            }
+          } else {
+            await setDoc(userRef, {
+              uid: fbUser.uid,
+              email: fbUser.email || '',
+              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+              role,
+              createdAt: new Date().toISOString()
+            });
+          }
+        } catch (e) {
+          console.error("Failed to load user role from Firestore", e);
+        }
+      }
+
+      if (!cancelled) {
+        setUser(mapUser(fbUser, role));
+        setIsLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -106,8 +140,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       // Create user document in Firestore for Backend Role Verification
-      // Mirror the frontend logic: if email is admin@optistyle.com, make them admin in DB too
-      const role = email === 'admin@optistyle.com' ? 'admin' : 'user';
+      // Mirror the frontend logic: if email is optistyle.india@gmail.com, make them admin in DB too
+      const role = email === 'optistyle.india@gmail.com' ? 'admin' : 'user';
       
       if (db) {
         await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -122,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Force update user state immediately to reflect name change before reload
-      setUser(mapUser({ ...userCredential.user, displayName: name } as FirebaseUser));
+      setUser(mapUser({ ...userCredential.user, displayName: name } as FirebaseUser, role));
     } catch (err: any) {
       console.error("Registration Failed", err);
       let msg = "Failed to register.";

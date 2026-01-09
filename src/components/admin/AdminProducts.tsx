@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
-import { Product } from '../../types';
+import { Product } from '../../../types';
 import { getAdminProducts, addProduct, updateProduct, deleteProduct } from '../../services/adminService';
 import { Button } from '../Button';
 

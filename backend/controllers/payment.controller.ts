@@ -1,18 +1,18 @@
 
-import { Request, Response } from 'express';
-import { getRazorpayClient, RAZORPAY_CONFIG } from '../clients/razorpayClient';
-import { verifyRazorpaySignature } from '../utils/paymentVerify';
-import { sendOrderEmails } from '../services/emailService';
-import { generateInvoiceBuffer } from '../services/pdfGenerator';
-import { calculateGST } from '../utils/gstUtils';
+import type { Request, Response } from 'express';
+import { getRazorpayClient, RAZORPAY_CONFIG } from '../clients/razorpayClient.ts';
+import { verifyRazorpaySignature } from '../utils/paymentVerify.ts';
+import { sendOrderEmails } from '../services/emailService.ts';
+import { generateInvoiceBuffer } from '../services/pdfGenerator.ts';
+import { calculateGST } from '../utils/gstUtils.ts';
 import { 
   createOrderInDB, 
   getOrderByRazorpayId, 
   updateOrderInDB, 
   getOrderById, 
   updateAnalytics 
-} from '../services/db';
-import { Order } from '../../types';
+} from '../services/db.ts';
+import type { Order } from '../../types.ts';
 
 interface CreateOrderBody {
   items: Order['items'];
@@ -24,6 +24,7 @@ interface CreateOrderBody {
 
 export const createOrder = async (req: Request<{}, {}, CreateOrderBody>, res: Response) => {
   try {
+    console.log('Create Order Request Body:', JSON.stringify(req.body, null, 2));
     const { items, total, user, currency = 'INR', paymentMethod = 'ONLINE' } = req.body;
 
     if (!total || total <= 0) {
