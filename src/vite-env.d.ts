@@ -9,6 +9,12 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID: string;
   readonly VITE_RAZORPAY_KEY_ID: string;
 }
+/// <reference types="vite/client" />
+
+declare module "*.svg" {
+  const content: string;
+  export default content;
+}
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
