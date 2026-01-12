@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { startPayment } from '../services/paymentService';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { SavedAddressList } from '../components/SavedAddressList';
-import { Address } from '../../types';
+import { Address } from '../types';
 
 // Define strict form shape
 interface CheckoutForm {

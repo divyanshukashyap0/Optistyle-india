@@ -11,7 +11,12 @@ import {
     getLogs,
     createSensitiveRequest,
     getApprovals,
-    decideApproval
+    decideApproval,
+    addProduct,
+    editProduct,
+    removeProduct,
+    manageOrderStatus,
+    getDashboardStatistics
 } from '../controllers/admin.controller.ts';
 import { verifyAdmin } from '../middleware/authMiddleware.ts';
 
@@ -19,6 +24,17 @@ const router = express.Router();
 
 // 🔒 ALL ADMIN ROUTES ARE PROTECTED
 router.use(verifyAdmin);
+
+// Dashboard
+router.get('/stats', getDashboardStatistics);
+
+// Product Management
+router.post('/products', addProduct);
+router.put('/products/:id', editProduct);
+router.delete('/products/:id', removeProduct);
+
+// Order Management
+router.post('/orders/status', manageOrderStatus);
 
 // Approval Workflow (Governance)
 router.get('/approvals', getApprovals);

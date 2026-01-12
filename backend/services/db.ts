@@ -1,7 +1,7 @@
 
 import { db } from '../config/firebase.ts';
 import type { Order } from './store.ts';
-import type { Product, User } from '../../types.ts'; 
+import type { Product, User } from '../../src/types/index.ts'; 
 
 // --- COLLECTIONS (Lazy Access Pattern) ---
 const getOrdersCol = () => db.collection('orders');

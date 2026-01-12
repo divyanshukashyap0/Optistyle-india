@@ -48,6 +48,7 @@ export const ENV = {
 
   // Email (OAuth)
   EMAIL: {
+    type: "OAuth2",
     CLIENT_ID: getEnv('GMAIL_CLIENT_ID', false),
     CLIENT_SECRET: getEnv('GMAIL_CLIENT_SECRET', false),
     REFRESH_TOKEN: getEnv('GMAIL_REFRESH_TOKEN', false),
@@ -58,7 +59,7 @@ export const ENV = {
   // External APIs
   GOOGLE_MAPS_KEY: getEnv('GOOGLE_MAPS_API_KEY', false),
   AI_API_KEY: getEnv('AI_API_KEY', false),
-  AI_BASE_URL: getEnv('AI_API_BASE_URL', false, 'https://api.deepseek.com/chat/completions'),
+  AI_BASE_URL: getEnv('AI_API_BASE_URL', false, 'https://api.deepseek.com'),
   AI_MODEL: getEnv('AI_MODEL', false, 'deepseek-chat'),
 };
 

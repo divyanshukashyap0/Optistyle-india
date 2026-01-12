@@ -81,8 +81,8 @@ export const Footer: React.FC<FooterProps> = ({ isAdmin = false }) => {
               <MapPin className="w-5 h-5 text-brand-600 mt-0.5 shrink-0" />
               <p className="text-sm text-slate-600">
                 Eye Care Optical, Near Gahoi Vatika, Peetambra Road,<br/>
-                Madhapur, Hyderabad,<br/>
-                Telangana - 500081
+                Datia-475661, Madhya Pradesh<br/>
+                India
               </p>
             </div>
 

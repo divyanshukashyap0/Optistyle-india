@@ -2,6 +2,8 @@
 // NOTE: This is a simulation for the purpose of the web application. 
 // Real refraction requires hardware.
 
+
+
 export interface EyeTestResult {
     eye: 'left' | 'right';
     acuityScore: number; // 0 to 1 (1 being 20/20)

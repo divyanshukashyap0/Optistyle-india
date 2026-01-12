@@ -16,9 +16,90 @@ import {
     createApprovalRequest,
     getPendingApprovals,
     updateApprovalStatus,
-    getApprovalById
+    getApprovalById,
+    addProductToDB,
+    updateProductInDB,
+    deleteProductFromDB,
+    getAnalyticsData
 } from '../services/db.ts';
 import type { AuthRequest } from '../middleware/authMiddleware.ts';
+
+// --- DASHBOARD STATS ---
+export const getDashboardStatistics = async (req: Request, res: Response) => {
+    try {
+        const stats = await getAnalyticsData();
+        const users = await getAllUsers();
+        
+        res.json({
+            ...stats,
+            totalUsers: users.length
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch statistics' });
+    }
+};
+
+// --- PRODUCT MANAGEMENT ---
+export const addProduct = async (req: Request, res: Response) => {
+    try {
+        const product = req.body;
+        const adminId = (req as AuthRequest).user?.uid || 'system';
+        
+        // Ensure ID
+        if (!product.id) product.id = Math.random().toString(36).substr(2, 9);
+        
+        await addProductToDB(product);
+        await logAdminAction(adminId, 'ADD_PRODUCT', `ID: ${product.id}`);
+        
+        res.json({ success: true, product });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to add product' });
+    }
+};
+
+export const editProduct = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        const adminId = (req as AuthRequest).user?.uid || 'system';
+        
+        await updateProductInDB(id, updates);
+        await logAdminAction(adminId, 'UPDATE_PRODUCT', `ID: ${id}`);
+        
+        res.json({ success: true, message: 'Product updated' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update product' });
+    }
+};
+
+export const removeProduct = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const adminId = (req as AuthRequest).user?.uid || 'system';
+        
+        await deleteProductFromDB(id);
+        await logAdminAction(adminId, 'DELETE_PRODUCT', `ID: ${id}`);
+        
+        res.json({ success: true, message: 'Product deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete product' });
+    }
+};
+
+// --- ORDER MANAGEMENT ---
+export const manageOrderStatus = async (req: Request, res: Response) => {
+    try {
+        const { orderId, status } = req.body;
+        const adminId = (req as AuthRequest).user?.uid || 'system';
+        
+        await updateOrderInDB(orderId, { status });
+        await logAdminAction(adminId, 'UPDATE_ORDER_STATUS', `Order: ${orderId} -> ${status}`);
+        
+        res.json({ success: true, message: 'Order status updated' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update order status' });
+    }
+};
 
 // --- APPROVAL WORKFLOW ---
 

@@ -44,6 +44,14 @@ export const endpoints = {
   createOrder: '/create-order',
   generateCertificate: '/certificate',
   chat: '/chat',
+  admin: {
+    stats: '/admin/stats',
+    products: '/admin/products',
+    orders: '/admin/orders', // if I had a specific admin orders route, but I'll use public for now or assume filter
+    status: '/admin/orders/status',
+    users: '/admin/users',
+    refunds: '/admin/refunds'
+  }
 };
 
 // --- API HELPER METHODS ---

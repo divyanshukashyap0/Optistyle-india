@@ -1,106 +1,91 @@
-import { Product, Order, User } from '../../types';
-import { PRODUCTS, MOCK_USER } from '../constants';
-
-// --- MOCK DATABASE STATE ---
-// In a real app, this would be a database. Here we keep it in memory.
-let productsDb: Product[] = [...PRODUCTS];
-
-// Mocking some extra orders for the demo
-let ordersDb: Order[] = [
-  {
-    id: 'ORD-7782-X',
-    userId: 'u123',
-    user: {
-      name: 'Rahul Sharma',
-      email: 'rahul@example.com'
-    },
-    currency: 'INR',
-    items: [productsDb[0] as any],
-    total: 1499,
-    status: 'delivered',
-    paymentMethod: 'ONLINE',
-    date: new Date(Date.now() - 86400000 * 2).toISOString()
-  },
-  {
-    id: 'ORD-9921-Y',
-    userId: 'u456',
-    user: {
-      name: 'Amit Verma',
-      email: 'amit@test.com'
-    },
-    currency: 'INR',
-    items: [productsDb[1] as any],
-    total: 1999,
-    status: 'processing',
-    paymentMethod: 'ONLINE',
-    date: new Date().toISOString()
-  },
-  {
-    id: 'ORD-3321-Z',
-    userId: 'u789',
-    user: {
-      name: 'Priya Singh',
-      email: 'priya@test.com'
-    },
-    currency: 'INR',
-    items: [productsDb[2] as any],
-    total: 1299,
-    status: 'pending',
-    paymentMethod: 'COD',
-    date: new Date().toISOString()
-  }
-];
-
-let usersDb: User[] = [
-  MOCK_USER as User,
-  { id: 'u456', name: 'Amit Verma', email: 'amit@test.com', role: 'user' },
-  { id: 'u789', name: 'Priya Singh', email: 'priya@test.com', role: 'user' },
-  { id: 'admin1', name: 'System Admin', email: 'optistyle.india@gmail.com', role: 'admin' }
-];
+import { Product, Order, User } from '../types';
+import { api, endpoints } from './api';
 
 // --- PRODUCT SERVICES ---
-export const getAdminProducts = async () => [...productsDb];
+export const getAdminProducts = async () => {
+  try {
+    const response = await api.get(endpoints.products);
+    return response.data as Product[];
+  } catch (error) {
+    console.error("Failed to fetch products", error);
+    return [];
+  }
+};
 
 export const addProduct = async (product: Omit<Product, 'id'>) => {
-  const newProduct = { ...product, id: Math.random().toString(36).substr(2, 9) };
-  productsDb = [newProduct, ...productsDb];
-  return newProduct;
+  const response = await api.post(endpoints.admin.products, product);
+  return response.data.product;
 };
 
 export const updateProduct = async (id: string, updates: Partial<Product>) => {
-  productsDb = productsDb.map(p => p.id === id ? { ...p, ...updates } : p);
-  return productsDb.find(p => p.id === id);
+  const response = await api.put(`${endpoints.admin.products}/${id}`, updates);
+  return response.data;
 };
 
 export const deleteProduct = async (id: string) => {
-  productsDb = productsDb.filter(p => p.id !== id);
+  await api.delete(`${endpoints.admin.products}/${id}`);
   return true;
 };
 
 // --- ORDER SERVICES ---
-export const getAdminOrders = async () => [...ordersDb];
+export const getAdminOrders = async () => {
+  try {
+    const response = await api.get(endpoints.orders);
+    return response.data as Order[];
+  } catch (error) {
+    console.error("Failed to fetch orders", error);
+    return [];
+  }
+};
 
 export const updateOrderStatus = async (id: string, status: Order['status']) => {
-  ordersDb = ordersDb.map(o => o.id === id ? { ...o, status } : o);
-  return ordersDb.find(o => o.id === id);
+  const response = await api.post(endpoints.admin.status, { orderId: id, status });
+  return response.data;
 };
 
 // --- USER SERVICES ---
-export const getAdminUsers = async () => [...usersDb];
+export const getAdminUsers = async () => {
+  try {
+    const response = await api.get(endpoints.admin.users);
+    return response.data as User[];
+  } catch (error) {
+    console.error("Failed to fetch users", error);
+    return [];
+  }
+};
 
 export const toggleUserStatus = async (id: string) => {
-  // Mock function to toggle user active state
+  // TODO: Implement user toggle logic in backend
+  console.log("Toggle user status not yet implemented on backend for:", id);
   return true; 
 };
 
 // --- STATS SERVICE ---
 export const getDashboardStats = async () => {
-  const revenue = ordersDb.reduce((acc, o) => acc + o.total, 0);
-  return {
-    totalRevenue: revenue,
-    totalOrders: ordersDb.length,
-    pendingOrders: ordersDb.filter(o => o.status === 'pending').length,
-    totalUsers: usersDb.length,
-    lowStock: 2 // Mocked
-  };
+  try {
+    const [statsRes, ordersRes] = await Promise.all([
+      api.get(endpoints.admin.stats),
+      api.get(endpoints.orders)
+    ]);
+
+    const stats = statsRes.data;
+    const orders = ordersRes.data as Order[];
+    
+    return {
+      totalRevenue: stats.totalRevenue || 0,
+      totalOrders: stats.totalOrders || 0,
+      pendingOrders: orders.filter(o => o.status === 'pending').length,
+      totalUsers: stats.totalUsers || 0,
+      lowStock: 0
+    };
+  } catch (error) {
+    console.error("Failed to fetch dashboard stats", error);
+    return {
+      totalRevenue: 0,
+      totalOrders: 0,
+      pendingOrders: 0,
+      totalUsers: 0,
+      lowStock: 0
+    };
+  }
 };

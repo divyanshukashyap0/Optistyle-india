@@ -126,7 +126,14 @@ export const startPayment = async (details: PaymentDetails): Promise<{ success: 
 
   } catch (err: any) {
     console.error("Payment Start Error:", err);
-    const errorMessage = err.response?.data?.message || err.message || "Something went wrong";
+    
+    let errorMessage = err.response?.data?.message || err.message || "Something went wrong";
+    
+    // Detect Network Error (Backend unreachable)
+    if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
+      errorMessage = "Cannot connect to server. Is the backend running on port 5000?";
+    }
+
     return { success: false, error: errorMessage };
   }
 };

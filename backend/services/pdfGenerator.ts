@@ -1,7 +1,7 @@
 
 import PDFDocument from 'pdfkit';
 import { Buffer } from 'buffer';
-import type { Order } from '../../types.ts';
+import type { Order } from '../../src/types/index.ts';
 import { GST_CONFIG, formatCurrency } from '../utils/gstUtils.ts';
 import { BRAND, LOGO_ASSET } from '../../src/constants/branding.ts'; // Now imports from backend-safe constants
 
@@ -60,8 +60,8 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
       doc.fontSize(8).font('Helvetica-Bold').fillColor(TEXT_LIGHT).text('SOLD BY', 40, infoY);
       doc.fontSize(10).font('Helvetica-Bold').fillColor(TEXT_DARK).text(`${BRAND.name} India Pvt Ltd.`, 40, infoY + 12);
       doc.fontSize(9).font('Helvetica').fillColor(TEXT_LIGHT);
-      doc.text('Plot 42, Hitech City', 40, infoY + 26);
-      doc.text('Hyderabad, Telangana - 500081', 40, infoY + 38);
+      doc.text('Eye Care Optical, Near Gahoi Vatika', 40, infoY + 26);
+      doc.text('Peetambra Road,Gahoi Colony', 40, infoY + 38);
       doc.text(`GSTIN: ${GST_CONFIG.SELLER_GSTIN}`, 40, infoY + 50);
 
       // Bill To
@@ -79,7 +79,13 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
 
       // --- TABLE ---
       const tableTop = 230;
-      const colX = { item: 50, hsn: 280, qty: 340, price: 400, total: 490 };
+      const colX = {
+  item: 50,
+  hsn: 260,
+  qty: 330,
+  price: 410,
+  total: 520,
+};
       
       doc.rect(40, tableTop, 515, 25).fill(BG_LIGHT);
       doc.fillColor(TEXT_DARK).fontSize(9).font('Helvetica-Bold');
@@ -116,13 +122,19 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
       y += 10;
       const t = order.taxBreakdown;
       if (t) {
-        const rightAlign = 490;
-        const labelAlign = 380; 
+      
+
 
         const drawRow = (label: string, value: string, bold = false) => {
             doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(9).fillColor(bold ? TEXT_DARK : TEXT_LIGHT);
-            doc.text(label, labelAlign, y, { align: 'right' });
-            doc.text(value, rightAlign, y, { align: 'right' });
+            const PAGE_RIGHT = doc.page.width - 40;
+const LABEL_X = PAGE_RIGHT - 200;
+const VALUE_X = PAGE_RIGHT;
+
+doc.text(label, LABEL_X, y, { align: 'left' });
+doc.text(value, VALUE_X, y, { align: 'right' });
+
+
             y += 16;
         };
 
@@ -138,8 +150,13 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
         y += 5;
         doc.roundedRect(360, y, 195, 30, 4).fill(PRIMARY);
         doc.fillColor('white').fontSize(11).font('Helvetica-Bold');
-        doc.text('Total Payable:', 380, y + 10, { align: 'right' });
-        doc.text(formatCurrency(t.totalAmount), 540, y + 10, { align: 'right' });
+        const PAGE_RIGHT = doc.page.width - 40;
+        doc.text('Total Payable:', PAGE_RIGHT - 220, y + 10, {
+        align: 'left',});
+        doc.text(formatCurrency(t.totalAmount), PAGE_RIGHT, y + 10, {
+          align: 'right',
+        });
+
       }
 
       // --- FOOTER ---
@@ -149,7 +166,7 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
       doc.fontSize(8).font('Helvetica').fillColor(TEXT_LIGHT);
       doc.text('Terms & Conditions:', 40, footerY + 15);
       doc.text('1. Goods once sold will not be taken back unless defective.', 40, footerY + 27);
-      doc.text('2. Subject to Hyderabad Jurisdiction only.', 40, footerY + 39);
+      doc.text('2. Subject to Datia MP Jurisdiction only.', 40, footerY + 39);
       
       doc.text('Authorized Signatory', 450, footerY + 15, { align: 'center' });
       doc.font('Helvetica-Bold').text(`${BRAND.name} India`, 450, footerY + 45, { align: 'center' });

@@ -58,8 +58,8 @@ const drawHeader = (doc: any, pageWidth: number) => {
     // Company Contact (Right aligned)
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Plot 42, Hitech City", pageWidth - 20, 24, { align: "right" });
-    doc.text("Hyderabad, India 500081", pageWidth - 20, 29, { align: "right" });
+    doc.text("Eye Care Optical, Near Gahoi Vatika", pageWidth - 20, 24, { align: "right" });
+    doc.text("Datia-475661, Madhya Pradesh", pageWidth - 20, 29, { align: "right" });
     doc.text("Support: +91 80053 43226", pageWidth - 20, 34, { align: "right" });
     
     // Horizontal Line

@@ -1,4 +1,4 @@
-import { Product, LensOption } from '../types.ts';
+import { Product, LensOption } from './types/index';
 
 // --- HELPER DATA FOR GENERATION ---
 const ADJECTIVES = [
@@ -30,7 +30,7 @@ const generateProducts = (count: number): Product[] => {
     {
       id: 'featured_1',
       name: 'OptiStyle Horizon Pro',
-      price: 1499,
+      price: 1,
       category: 'men',
       type: 'eyeglasses',
       shape: 'rectangle',

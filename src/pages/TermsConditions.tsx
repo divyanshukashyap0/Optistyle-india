@@ -123,7 +123,7 @@ export const TermsConditions: React.FC = () => {
           <section>
             <h2 className="text-xl font-bold text-slate-900 mb-3">9. Governing Law</h2>
             <p className="text-slate-600 leading-relaxed">
-              These terms are governed by the laws of India. Any disputes arising out of the use of this website will be subject to the exclusive jurisdiction of the courts in <strong>Hyderabad, Telangana</strong>.
+              These terms are governed by the laws of India. Any disputes arising out of the use of this website will be subject to the exclusive jurisdiction of the courts in <strong>Datia India</strong>.
             </p>
           </section>
 

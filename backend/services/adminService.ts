@@ -1,4 +1,4 @@
-import type { Product, Order, User } from '../../types.ts';
+import type { Product, Order, User } from '../../src/types';
 import { MOCK_USER } from '../../src/constants.ts';
 import { getAllOrders, getAnalyticsData, getAllProducts, addProductToDB, updateProductInDB, deleteProductFromDB } from './db.ts';
 

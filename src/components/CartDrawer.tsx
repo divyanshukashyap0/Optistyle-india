@@ -79,7 +79,7 @@ export const CartDrawer: React.FC = () => {
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
-                        <p className="font-medium text-slate-900">${(item.price + (item.selectedLens?.price || 0)) * item.quantity}</p>
+                        <p className="font-medium text-slate-900">₹{(item.price + (item.selectedLens?.price || 0)) * item.quantity}</p>
                       </div>
                     </div>
                   </div>

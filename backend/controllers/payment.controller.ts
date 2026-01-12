@@ -12,7 +12,7 @@ import {
   getOrderById, 
   updateAnalytics 
 } from '../services/db.ts';
-import type { Order } from '../../types.ts';
+import type { Order } from '../../src/types/index.ts';
 
 interface CreateOrderBody {
   items: Order['items'];

@@ -8,10 +8,10 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "server": "ts-node --esm --experimental-specifier-resolution=node backend/server.ts",
-    "build:backend": "-p backend/tsconfig.json",
+    "build:backend": "tsc -p backend/tsconfig.json",
     "start:backend": "node --experimental-specifier-resolution=node dist/backend/server.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
