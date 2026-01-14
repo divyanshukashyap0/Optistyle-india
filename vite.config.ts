@@ -10,14 +10,10 @@ export default defineConfig(({ mode }) => {
         host: true,
         proxy: {
           '/api': {
-            target: 'http://localhost:5000',
+            target: 'http://localhost:5001',
             changeOrigin: true,
           }
-        },
-        hmr: {
-            host: env.VITE_DEV_HOST || undefined,
-            clientPort: 3000,
-        },
+        }
       },
       plugins: [react()],
       define: {

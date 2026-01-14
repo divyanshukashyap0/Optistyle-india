@@ -1,37 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { generateInvoice } from '../services/pdfService';
-import { saveUserAddress } from '../services/addressService';
-import { api } from '../services/api';
+import { fetchLocationByPincode } from '../services/pincodeService';
 import { 
   CheckCircle, AlertTriangle, ShieldCheck, CreditCard, Banknote, 
-  ChevronDown, ChevronUp, Truck, Download, MessageCircle, Save, Loader
+  MapPin, ChevronDown, ChevronUp, Loader, Truck, Download, Search 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { startPayment } from '../services/paymentService';
-import { AddressAutocomplete } from '../components/AddressAutocomplete';
-import { SavedAddressList } from '../components/SavedAddressList';
-import { Address, CartItem } from '../types';
-
-// Define strict form shape
-interface CheckoutForm {
-  firstName: string;
-  lastName: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  email: string;
-  phone: string;
-}
 
 export const Checkout: React.FC = () => {
   const { state, dispatch } = useCart();
-  const { user, uid } = useAuth();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
@@ -40,104 +22,80 @@ export const Checkout: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
   
+  // Pincode Lookup State
+  const [fetchingPincode, setFetchingPincode] = useState(false);
+  const [pincodeError, setPincodeError] = useState(false);
+  
+  // Payment Method
   const [paymentMethod, setPaymentMethod] = useState<'ONLINE' | 'COD'>('ONLINE');
-  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
-  const [saveNewAddress, setSaveNewAddress] = useState(true);
 
-  const [deliveryInfo, setDeliveryInfo] = useState<{available: boolean, message: string, type?: string, cod?: boolean} | null>(null);
-  const [checkingDelivery, setCheckingDelivery] = useState(false);
-
-  const [orderItems, setOrderItems] = useState<CartItem[]>(state.items);
-  const [orderTotal, setOrderTotal] = useState(state.total);
-
-  const [formData, setFormData] = useState<CheckoutForm>({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ')[1] || '',
+  // Form State
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     address: '',
     city: '',
     state: '',
     zip: '',
-    email: user?.email || '',
+    email: '',
     phone: ''
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({});
+  // Validation State
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Auto-fill City/State based on Pincode
   useEffect(() => {
-    if (state.items.length === 0 && paymentStatus !== 'success') {
-      navigate('/shop');
-    }
-  }, [state.items, paymentStatus, navigate]);
-
-  // Debounced Delivery Check
-  useEffect(() => {
-    const checkPin = async () => {
+    const lookupPincode = async () => {
       if (formData.zip.length === 6) {
-        setCheckingDelivery(true);
-        try {
-          const { data } = await api.post('/address/check-delivery', { pincode: formData.zip });
-          setDeliveryInfo(data);
-          // If COD not available but selected, switch to ONLINE
-          if (data.available && !data.cod && paymentMethod === 'COD') {
-             setPaymentMethod('ONLINE');
-          }
-        } catch (e) {
-           console.error("Delivery check failed", e);
-           setDeliveryInfo(null);
-        } finally {
-          setCheckingDelivery(false);
+        setFetchingPincode(true);
+        setPincodeError(false);
+        
+        const location = await fetchLocationByPincode(formData.zip);
+        
+        setFetchingPincode(false);
+        
+        if (location) {
+          setFormData(prev => ({ 
+            ...prev, 
+            city: location.city, 
+            state: location.state 
+          }));
+          // Clear any existing errors for these fields
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.city;
+            delete newErrors.state;
+            delete newErrors.zip;
+            return newErrors;
+          });
+        } else {
+          setPincodeError(true); // Hint to user to enter manually
         }
-      } else {
-        setDeliveryInfo(null);
       }
     };
-    const timer = setTimeout(checkPin, 600);
-    return () => clearTimeout(timer);
-  }, [formData.zip, paymentMethod]);
+
+    // Debounce slightly to avoid rapid calls if typing fast (though service handles redundant calls)
+    const timeoutId = setTimeout(lookupPincode, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData.zip]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [name]: value });
     
-    // Clear error for this field
-    if (errors[name as keyof CheckoutForm]) {
-      setErrors(prev => { 
-        const n = {...prev}; 
-        delete n[name as keyof CheckoutForm]; 
-        return n; 
+    // Clear error on type
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
       });
     }
-    
-    // If user types manually, deselect saved address
-    if (selectedSavedAddressId) setSelectedSavedAddressId(null);
-  };
-
-  const handleAddressSelect = (suggestion: any) => {
-      setFormData(prev => ({
-          ...prev,
-          address: suggestion.main_text || suggestion.description.split(',')[0],
-          city: suggestion.city || prev.city,
-          state: suggestion.state || prev.state,
-          zip: suggestion.zip || prev.zip
-      }));
-  };
-
-  const handleSavedAddressSelect = (addr: Address) => {
-      setSelectedSavedAddressId(addr.id);
-      setFormData({
-          firstName: addr.name.split(' ')[0] || '',
-          lastName: addr.name.split(' ')[1] || '',
-          phone: addr.phone,
-          address: addr.street,
-          city: addr.city,
-          state: addr.state,
-          zip: addr.zip,
-          email: formData.email // Keep email from auth or current input
-      });
   };
 
   const validateForm = () => {
-    const newErrors: Partial<Record<keyof CheckoutForm, string>> = {};
+    const newErrors: Record<string, string> = {};
     if (!formData.firstName) newErrors.firstName = "First name is required";
     if (!formData.lastName) newErrors.lastName = "Last name is required";
     if (!formData.phone || formData.phone.length < 10) newErrors.phone = "Valid phone required";
@@ -146,11 +104,6 @@ export const Checkout: React.FC = () => {
     if (!formData.city) newErrors.city = "City is required";
     if (!formData.state) newErrors.state = "State is required";
     
-    // Logical Validation
-    if (deliveryInfo && !deliveryInfo.available) {
-        newErrors.zip = "Delivery not available to this PIN";
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -158,6 +111,7 @@ export const Checkout: React.FC = () => {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
+        // Scroll to top error
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
     }
@@ -165,24 +119,6 @@ export const Checkout: React.FC = () => {
     setLoading(true);
     setErrorMsg(null);
 
-    // Save address if new and requested
-    if (uid && saveNewAddress && !selectedSavedAddressId) {
-        try {
-            await saveUserAddress(uid, {
-                name: `${formData.firstName} ${formData.lastName}`,
-                phone: formData.phone,
-                street: formData.address,
-                city: formData.city,
-                state: formData.state,
-                zip: formData.zip,
-                isDefault: false
-            });
-        } catch (e) {
-            console.error("Failed to save address", e);
-            // Non-blocking error
-        }
-    }
-
     const result = await startPayment({
       total: state.total,
       items: state.items,
@@ -193,9 +129,6 @@ export const Checkout: React.FC = () => {
     setLoading(false);
 
     if (result.success && result.orderId) {
-      setOrderItems(state.items);
-      setOrderTotal(state.total);
-      dispatch({ type: 'CLEAR_CART' });
       setOrderId(result.orderId);
       setPaymentStatus('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -203,40 +136,6 @@ export const Checkout: React.FC = () => {
       setPaymentStatus('failed');
       setErrorMsg(result.error || "Payment failed. Please try again.");
     }
-  };
-  
-  const retryPayment = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    const result = await startPayment({
-      total: state.total,
-      items: state.items,
-      user: formData,
-      method: paymentMethod
-    });
-    setLoading(false);
-    if (result.success && result.orderId) {
-      setOrderItems(state.items);
-      setOrderTotal(state.total);
-      dispatch({ type: 'CLEAR_CART' });
-      setOrderId(result.orderId);
-      setPaymentStatus('success');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setPaymentStatus('failed');
-      setErrorMsg(result.error || "Payment failed. Please try again.");
-    }
-  };
-
-  const payWithCOD = async () => {
-    setPaymentMethod('COD');
-    await retryPayment();
-  };
-
-  const handleWhatsAppConfirm = () => {
-      const message = `Hi OptiStyle, I confirm my order #${orderId}. Delivery to: ${formData.firstName}, ${formData.address}, ${formData.city} - ${formData.zip}. Contact: ${formData.phone}`;
-      const url = `https://wa.me/918005343226?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
   };
 
   const handleDownloadInvoice = () => {
@@ -249,8 +148,8 @@ export const Checkout: React.FC = () => {
               city: formData.city,
               zip: formData.zip
           },
-          orderItems,
-          orderTotal
+          state.items,
+          state.total
       );
   };
 
@@ -281,15 +180,18 @@ export const Checkout: React.FC = () => {
                     Thank you, {formData.firstName}.<br/> Your order <span className="font-mono font-bold text-slate-900">#{orderId}</span> has been placed.
                 </p>
                 
+                {paymentMethod === 'COD' && (
+                    <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm mb-6 border border-amber-200 text-left flex gap-3">
+                        <Banknote className="w-5 h-5 shrink-0" />
+                        <span>Please keep <strong>₹{state.total}</strong> cash ready at delivery.</span>
+                    </div>
+                )}
+                
                 <div className="space-y-3">
-                    <Button onClick={handleWhatsAppConfirm} className="w-full bg-[#25D366] hover:bg-[#128C7E] flex items-center justify-center gap-2">
-                        <MessageCircle className="w-5 h-5" /> Confirm via WhatsApp
-                    </Button>
-                    
                     <Button onClick={handleDownloadInvoice} variant="outline" className="w-full flex items-center justify-center gap-2">
                         <Download className="w-4 h-4" /> Download Invoice
                     </Button>
-                    <Button onClick={handleFinish} variant="ghost" className="w-full">
+                    <Button onClick={handleFinish} className="w-full">
                         Continue Shopping
                     </Button>
                 </div>
@@ -300,6 +202,7 @@ export const Checkout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12">
+      {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
           <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
               <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -312,7 +215,10 @@ export const Checkout: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-6 md:py-10">
         <div className="flex flex-col-reverse lg:flex-row gap-8 lg:gap-12">
           
+          {/* LEFT COLUMN: FORM */}
           <div className="flex-1 space-y-6">
+            
+            {/* Error Banner */}
             <AnimatePresence>
                 {paymentStatus === 'failed' && (
                 <motion.div 
@@ -325,45 +231,21 @@ export const Checkout: React.FC = () => {
                     <div>
                         <p className="font-bold text-sm">Transaction Failed</p>
                         <p className="text-sm">{errorMsg}</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={retryPayment}
-                              loading={loading}
-                            >
-                              Retry Payment
-                            </Button>
-                            <Button 
-                              type="button" 
-                              onClick={payWithCOD}
-                              loading={loading}
-                            >
-                              Switch to COD
-                            </Button>
-                        </div>
                     </div>
                 </motion.div>
                 )}
             </AnimatePresence>
 
             <form id="checkout-form" onSubmit={handleCheckout} className="space-y-8">
+                
+                {/* Section 1: Delivery */}
                 <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">1</div>
                         Delivery Details
                     </h2>
                     
-                    {uid && (
-                        <SavedAddressList 
-                            userId={uid} 
-                            selectedId={selectedSavedAddressId || undefined}
-                            onSelect={handleSavedAddressSelect}
-                            onAddNew={() => setSelectedSavedAddressId(null)}
-                        />
-                    )}
-                    
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-5 ${selectedSavedAddressId ? 'opacity-50 pointer-events-none grayscale-[0.5]' : ''}`}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <InputGroup label="First Name" name="firstName" value={formData.firstName} onChange={handleInputChange} error={errors.firstName} />
                         <InputGroup label="Last Name" name="lastName" value={formData.lastName} onChange={handleInputChange} error={errors.lastName} />
                         
@@ -373,9 +255,10 @@ export const Checkout: React.FC = () => {
                                 name="phone" 
                                 type="tel" 
                                 value={formData.phone} 
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                onChange={(e) => {
+                                    // Only allow numbers
                                     const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                    setFormData(prev => ({...prev, phone: val}));
+                                    setFormData({...formData, phone: val});
                                 }} 
                                 prefix="+91"
                                 error={errors.phone}
@@ -384,14 +267,7 @@ export const Checkout: React.FC = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            <AddressAutocomplete 
-                                name="address"
-                                value={formData.address}
-                                onChange={(val) => setFormData(prev => ({...prev, address: val}))}
-                                onSelect={handleAddressSelect}
-                                placeholder="Start typing address..."
-                                error={errors.address}
-                            />
+                            <InputGroup label="Flat, House no., Building, Company" name="address" value={formData.address} onChange={handleInputChange} error={errors.address} />
                         </div>
 
                         <div>
@@ -399,49 +275,42 @@ export const Checkout: React.FC = () => {
                                 label="Pincode" 
                                 name="zip" 
                                 value={formData.zip} 
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                onChange={(e) => {
                                     const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                    setFormData(prev => ({...prev, zip: val}));
+                                    setFormData({...formData, zip: val});
                                 }} 
                                 error={errors.zip}
                                 inputMode="numeric"
-                                isLoading={checkingDelivery}
+                                hint={pincodeError ? "Could not find details. Please enter manually." : "Auto-fills City & State"}
+                                isLoading={fetchingPincode}
                             />
-                            {deliveryInfo && (
-                                <motion.div 
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className={`mt-2 text-xs font-bold flex items-center gap-1.5 ${deliveryInfo.available ? 'text-green-600' : 'text-red-600'}`}
-                                >
-                                    {deliveryInfo.available ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                                    {deliveryInfo.message}
-                                </motion.div>
-                            )}
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
-                            <InputGroup label="City" name="city" value={formData.city} onChange={handleInputChange} error={errors.city} />
-                            <InputGroup label="State" name="state" value={formData.state} onChange={handleInputChange} error={errors.state} />
+                            <InputGroup 
+                                label="City" 
+                                name="city" 
+                                value={formData.city} 
+                                onChange={handleInputChange} 
+                                error={errors.city} 
+                                // Keep editable but maybe apply visual style if auto-filled
+                            />
+                            <InputGroup 
+                                label="State" 
+                                name="state" 
+                                value={formData.state} 
+                                onChange={handleInputChange}
+                                error={errors.state}
+                            />
                         </div>
 
                         <div className="md:col-span-2">
                             <InputGroup label="Email Address" name="email" type="email" value={formData.email} onChange={handleInputChange} />
                         </div>
-
-                        {uid && !selectedSavedAddressId && (
-                            <div className="md:col-span-2">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${saveNewAddress ? 'bg-brand-600 border-brand-600 text-white' : 'border-slate-300'}`}>
-                                        {saveNewAddress && <Save className="w-3 h-3" />}
-                                    </div>
-                                    <input type="checkbox" className="hidden" checked={saveNewAddress} onChange={() => setSaveNewAddress(!saveNewAddress)} />
-                                    <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900">Save this address for next time</span>
-                                </label>
-                            </div>
-                        )}
                     </div>
                 </section>
 
+                {/* Section 2: Payment */}
                 <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs">2</div>
@@ -461,18 +330,19 @@ export const Checkout: React.FC = () => {
                         <PaymentOption 
                             id="COD"
                             title="Cash on Delivery"
-                            description={deliveryInfo && !deliveryInfo.cod ? "Not available for this pincode" : "Pay with cash or UPI upon delivery"}
+                            description="Pay with cash or UPI upon delivery"
                             icon={Banknote}
                             selected={paymentMethod === 'COD'}
                             onSelect={() => setPaymentMethod('COD')}
-                            disabled={deliveryInfo && !deliveryInfo.available ? false : (deliveryInfo && !deliveryInfo.cod)}
                         />
                     </div>
                 </section>
             </form>
           </div>
 
+          {/* RIGHT COLUMN: ORDER SUMMARY */}
           <div className="lg:w-96 shrink-0">
+             {/* Mobile Summary Toggle */}
              <div className="lg:hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
                 <button 
                     onClick={() => setShowMobileSummary(!showMobileSummary)}
@@ -494,18 +364,19 @@ export const Checkout: React.FC = () => {
                             exit={{ height: 0 }}
                             className="overflow-hidden border-t border-slate-200"
                         >
-                            <SummaryContent items={state.items} total={state.total} deliveryInfo={deliveryInfo} />
+                            <SummaryContent items={state.items} total=₹{state.total} />
                         </motion.div>
                     )}
                 </AnimatePresence>
              </div>
 
+             {/* Desktop Summary Sticky */}
              <div className="hidden lg:block sticky top-24">
                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="p-4 border-b border-slate-100 bg-slate-50">
                         <h3 className="font-bold text-slate-800">Order Summary</h3>
                     </div>
-                    <SummaryContent items={state.items} total={state.total} deliveryInfo={deliveryInfo} />
+                    <SummaryContent items={state.items} total={state.total} />
                  </div>
                  
                  <div className="mt-6 space-y-3">
@@ -520,6 +391,7 @@ export const Checkout: React.FC = () => {
         </div>
       </div>
 
+      {/* MOBILE STICKY BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:hidden z-40">
          <div className="flex gap-4 items-center">
              <div className="flex-1">
@@ -527,7 +399,8 @@ export const Checkout: React.FC = () => {
                  <p className="text-xl font-bold text-slate-900">₹{state.total}</p>
              </div>
              <Button 
-                onClick={() => {
+                onClick={(e) => {
+                    // Trigger form submit from outside
                     const form = document.getElementById('checkout-form') as HTMLFormElement;
                     if(form) form.requestSubmit();
                 }}
@@ -539,7 +412,10 @@ export const Checkout: React.FC = () => {
          </div>
       </div>
 
+      {/* DESKTOP SUBMIT BUTTON (Hidden on Mobile due to sticky bar) */}
       <div className="hidden md:block fixed bottom-0 left-0 right-0 lg:static">
+          {/* This logic is handled by the form submit inside the layout on desktop, 
+              but we need to ensure the button exists inside the form for accessibility/enter key */}
           <div className="max-w-7xl mx-auto px-4 relative">
              <div className="absolute bottom-10 right-[420px] w-64 hidden lg:block">
                  <Button 
@@ -588,11 +464,10 @@ const InputGroup: React.FC<any> = ({ label, error, prefix, hint, isLoading, clas
     </div>
 );
 
-const PaymentOption: React.FC<any> = ({ title, description, icon: Icon, selected, onSelect, badge, disabled }) => (
+const PaymentOption: React.FC<any> = ({ title, description, icon: Icon, selected, onSelect, badge }) => (
     <div 
-        onClick={!disabled ? onSelect : undefined}
-        className={`relative p-4 rounded-xl border-2 transition-all flex items-center gap-4 group
-            ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-50 border-slate-200' : 'cursor-pointer'}
+        onClick={onSelect}
+        className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-4 group
             ${selected 
                 ? 'border-brand-600 bg-brand-50 shadow-sm' 
                 : 'border-slate-200 hover:border-brand-200 bg-white'
@@ -614,7 +489,7 @@ const PaymentOption: React.FC<any> = ({ title, description, icon: Icon, selected
             <p className="text-xs text-slate-500">{description}</p>
         </div>
 
-        {badge && !disabled && (
+        {badge && (
             <span className="absolute top-3 right-3 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 {badge}
             </span>
@@ -622,7 +497,7 @@ const PaymentOption: React.FC<any> = ({ title, description, icon: Icon, selected
     </div>
 );
 
-const SummaryContent: React.FC<any> = ({ items, total, deliveryInfo }) => (
+const SummaryContent: React.FC<any> = ({ items, total }) => (
     <div className="p-4 bg-white">
         <div className="space-y-4 mb-6">
             {items.map((item: any) => (
@@ -649,13 +524,7 @@ const SummaryContent: React.FC<any> = ({ items, total, deliveryInfo }) => (
             </div>
             <div className="flex justify-between text-slate-600">
                 <span>Shipping</span>
-                {deliveryInfo?.type === 'EXPRESS' ? (
-                    <span className="text-brand-600 font-bold flex items-center gap-1">
-                        <Loader className="w-3 h-3 animate-spin" /> Calc...
-                    </span>
-                ) : (
-                    <span className="text-green-600 font-medium">Free</span>
-                )}
+                <span className="text-green-600 font-medium">Free</span>
             </div>
             <div className="flex justify-between text-slate-900 font-bold text-lg pt-2 border-t border-slate-100 mt-2">
                 <span>Total</span>

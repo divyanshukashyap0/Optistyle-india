@@ -8,17 +8,21 @@ import {
   onAuthStateChanged, 
   updateProfile,
   sendPasswordResetEmail,
-  User as FirebaseUser
+  signInWithPopup,
+  User as FirebaseUser,
+  signInAnonymously
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db, googleProvider } from '../firebase';
 
 interface AuthContextType {
   user: User | null;
+  uid: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   isLoading: boolean;
   isAdmin: boolean;
   error: string | null;
@@ -28,35 +32,89 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Map Firebase User to App User
   const mapUser = (fbUser: FirebaseUser): User => {
-    // In a real app, you might fetch claims or a Firestore document for roles.
-    const role = fbUser.email === 'admin@optistyle.com' ? 'admin' : 'user';
+    const role = fbUser.email === 'optistyle.india@gmail.com' ? 'admin' : 'user';
     return {
       id: fbUser.uid,
       name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
       email: fbUser.email || '',
-      role
+      role,
+      isAnonymous: fbUser.isAnonymous
     };
   };
 
   useEffect(() => {
     if (!auth) {
       console.warn("Firebase Auth not initialized. Skipping auth listener.");
+      setUid(null);
       setIsLoading(false);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       if (fbUser) {
-        setUser(mapUser(fbUser));
+        setUid(fbUser.uid);
+        if (fbUser.isAnonymous) {
+          setUser(null);
+          setIsLoading(false);
+        } else {
+          if (db) {
+            (async () => {
+              try {
+                const userRef = doc(db, "users", fbUser.uid);
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                  const data = snap.data() as any;
+                  let role = data.role || (fbUser.email === 'optistyle.india@gmail.com' ? 'admin' : 'user');
+                  if (fbUser.email === 'optistyle.india@gmail.com' && data.role !== 'admin') {
+                    role = 'admin';
+                    await setDoc(userRef, { ...data, role }, { merge: true });
+                  }
+                  setUser({
+                    id: fbUser.uid,
+                    name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+                    email: data.email || fbUser.email || '',
+                    role,
+                    isAnonymous: fbUser.isAnonymous
+                  });
+                } else {
+                  const mapped = mapUser(fbUser);
+                  setUser(mapped);
+                  await setDoc(userRef, {
+                    uid: fbUser.uid,
+                    email: mapped.email,
+                    name: mapped.name,
+                    role: mapped.role,
+                    createdAt: new Date().toISOString()
+                  });
+                }
+              } catch {
+                setUser(mapUser(fbUser));
+              } finally {
+                setIsLoading(false);
+              }
+            })();
+          } else {
+            setUser(mapUser(fbUser));
+            setIsLoading(false);
+          }
+        }
       } else {
         setUser(null);
+        setUid(null);
+        (async () => {
+          try {
+            await signInAnonymously(auth!);
+          } catch (e) {
+            console.error("Anonymous sign-in failed", e);
+            setIsLoading(false);
+          }
+        })();
       }
-      setIsLoading(false);
     });
 
     return () => unsubscribe();
@@ -75,15 +133,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // State updates handled by onAuthStateChanged
     } catch (err: any) {
-      console.error("Login Failed", err);
       let msg = "Failed to login.";
       if (err.code === 'auth/user-not-found') msg = "No account found with this email.";
       if (err.code === 'auth/wrong-password') msg = "Incorrect password.";
       if (err.code === 'auth/invalid-email') msg = "Invalid email address.";
+      if (err.code === 'auth/invalid-credential') msg = "Invalid email or password.";
       setError(msg);
-      setIsLoading(false); // Manually stop loading on error since auth state won't change
+      setIsLoading(false);
+      throw new Error(msg);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    if (!auth || !googleProvider) {
+      const msg = "Authentication service is not configured. Please check .env file.";
+      setError(msg);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const fbUser = result.user;
+
+      if (db) {
+        try {
+          const userRef = doc(db, "users", fbUser.uid);
+          const snap = await getDoc(userRef);
+          if (!snap.exists()) {
+            const role = fbUser.email === 'optistyle.india@gmail.com' ? 'admin' : 'user';
+            await setDoc(userRef, {
+              uid: fbUser.uid,
+              email: fbUser.email,
+              name: fbUser.displayName || fbUser.email || 'Google User',
+              role,
+              createdAt: new Date().toISOString(),
+              provider: 'google'
+            });
+          }
+        } catch (e) {
+        }
+      }
+      setIsLoading(false);
+    } catch (err: any) {
+      let msg = "Failed to login with Google.";
+      if (err.code === 'auth/popup-closed-by-user') msg = "Login cancelled.";
+      if (err.code === 'auth/popup-blocked') msg = "Popup blocked. Please allow popups and try again.";
+       if (err.code === 'auth/operation-not-allowed') msg = "Google login is not enabled. Please use email login.";
+      setError(msg);
+      setIsLoading(false);
       throw new Error(msg);
     }
   };
@@ -106,8 +208,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       // Create user document in Firestore for Backend Role Verification
-      // Mirror the frontend logic: if email is admin@optistyle.com, make them admin in DB too
-      const role = email === 'admin@optistyle.com' ? 'admin' : 'user';
+      // Mirror the frontend logic: if email is optistyle.india@gmail.com, make them admin in DB too
+      const role = email === 'optistyle.india@gmail.com' ? 'admin' : 'user';
       
       if (db) {
         await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -173,10 +275,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ 
       user, 
+      uid,
       login, 
       register, 
       logout, 
       resetPassword,
+      loginWithGoogle,
       isLoading,
       isAdmin: user?.role === 'admin',
       error

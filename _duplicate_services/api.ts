@@ -1,9 +1,7 @@
-
 import axios from 'axios';
-import { auth } from '../firebase'; // Import client auth
-import { ENV } from '../config/env';
 
-const API_URL = ENV.API_URL;
+// In production, this would come from import.meta.env.VITE_API_URL
+const API_URL = 'http://localhost:5000/api';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -12,22 +10,10 @@ export const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach ID Token for protected routes
-api.interceptors.request.use(async (config) => {
-    // If request is for admin or secured endpoints, attach token
-    if (config.url?.includes('/admin') || config.url?.includes('/payment') || config.url?.includes('/orders')) {
-        const user = auth?.currentUser;
-        if (user) {
-            const token = await user.getIdToken();
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-    }
-    return config;
-});
-
-// Response Interceptor
+// Mock API delays to simulate real world latency
 api.interceptors.response.use(
   async (response) => {
+    // Keep delay small for chat to feel responsive
     const delay = response.config.url?.includes('chat') ? 300 : 500;
     await new Promise(resolve => setTimeout(resolve, delay));
     return response;
@@ -41,18 +27,9 @@ export const endpoints = {
   products: '/products',
   product: (id: string) => `/products/${id}`,
   orders: '/orders',
-  ordersMy: '/orders/my-orders',
   createOrder: '/create-order',
   generateCertificate: '/certificate',
   chat: '/chat',
-  admin: {
-    stats: '/admin/stats',
-    products: '/admin/products',
-    orders: '/admin/orders', // if I had a specific admin orders route, but I'll use public for now or assume filter
-    status: '/admin/orders/status',
-    users: '/admin/users',
-    refunds: '/admin/refunds'
-  }
 };
 
 // --- API HELPER METHODS ---
@@ -62,6 +39,7 @@ export const downloadOrderInvoice = async (orderId: string) => {
     const response = await api.get(`/payment/invoice/${orderId}`, {
       responseType: 'blob'
     });
+    // Create blob link to download
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -100,40 +78,4 @@ export const exportAdminData = async (type: 'orders' | 'refunds') => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-};
-
-export const getAdminUsers = async () => {
-    const res = await api.get('/admin/users');
-    return res.data;
-};
-
-export const modifyAdminUser = async (uid: string, action: string) => {
-    return api.post('/admin/users/modify', { uid, action });
-};
-
-export const getSystemSettings = async () => {
-    const res = await api.get('/admin/system');
-    return res.data;
-};
-
-export const updateSystemSettings = async (settings: any) => {
-    return api.post('/admin/system', settings);
-};
-
-export const createApprovalRequest = async (type: string, data: any) => {
-    return api.post('/admin/approvals/create', { type, data });
-};
-
-export const getPendingApprovals = async () => {
-    const res = await api.get('/admin/approvals');
-    return res.data;
-};
-
-export const decideApproval = async (requestId: string, decision: 'APPROVED' | 'REJECTED') => {
-    return api.post('/admin/approvals/decide', { requestId, decision });
-};
-
-export const getAuditLogs = async () => {
-    const res = await api.get('/admin/logs');
-    return res.data;
 };

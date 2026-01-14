@@ -68,28 +68,31 @@ export const AdminOverview: React.FC<{ onViewChange: (view: any) => void }> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {recentOrders.map(order => (
-                  <tr key={order.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-medium text-slate-900">{order.id}</td>
-                    <td className="p-3">
-                        <span className={`flex items-center gap-1.5 font-medium ${order.paymentMethod === 'COD' ? 'text-amber-700' : 'text-blue-700'}`}>
-                            {order.paymentMethod === 'COD' ? <Banknote className="w-3 h-3" /> : <CreditCard className="w-3 h-3" />}
-                            {order.paymentMethod}
+                {recentOrders.map(order => {
+                  const status = order.status || 'unknown';
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-50">
+                      <td className="p-3 font-medium text-slate-900">{order.id}</td>
+                      <td className="p-3">
+                          <span className={`flex items-center gap-1.5 font-medium ${order.paymentMethod === 'COD' ? 'text-amber-700' : 'text-blue-700'}`}>
+                              {order.paymentMethod === 'COD' ? <Banknote className="w-3 h-3" /> : <CreditCard className="w-3 h-3" />}
+                              {order.paymentMethod}
+                          </span>
+                      </td>
+                      <td className="p-3 font-bold text-slate-900">₹{order.total}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                          status === 'delivered' ? 'bg-green-100 text-green-700' :
+                          status === 'cod_pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                          'bg-slate-100 text-slate-700'
+                        }`}>
+                          {status.replace('_', ' ')}
                         </span>
-                    </td>
-                    <td className="p-3 font-bold text-slate-900">₹{order.total}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                        order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                        order.status === 'cod_pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                        'bg-slate-100 text-slate-700'
-                      }`}>
-                        {order.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

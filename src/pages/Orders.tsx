@@ -11,13 +11,19 @@ export const Orders: React.FC = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // In production, this would use a real endpoint filtered by user ID
-    api.get('/orders').then(res => {
-        setOrders(res.data); // Mock API returns all, assume filtering happens
+    api.get('/orders/my-orders')
+      .then(res => {
+        setOrders(res.data);
+      })
+      .catch(() => {
+        setError("Could not load orders. Please check your connection or try again.");
+      })
+      .finally(() => {
         setLoading(false);
-    });
+      });
   }, []);
 
   const handleRefund = async (orderId: string) => {
@@ -40,7 +46,11 @@ export const Orders: React.FC = () => {
       <h1 className="text-3xl font-serif font-bold mb-8">Order History</h1>
       <div className="space-y-4">
         {loading ? (
-             <div className="p-8 text-center text-slate-500">Loading orders...</div>
+          <div className="p-8 text-center text-slate-500">Loading orders...</div>
+        ) : error ? (
+          <div className="p-8 text-center bg-red-50 text-red-700 border border-red-200 rounded-xl">
+            {error}
+          </div>
         ) : orders.length === 0 ? (
              <div className="p-8 text-center bg-slate-50 rounded-xl">No orders found.</div>
         ) : (

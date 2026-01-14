@@ -31,21 +31,28 @@ export const Logo: React.FC<LogoProps> = ({
     brand: 'text-brand-600'
   }[color];
 
-  const Wrapper = animated ? motion.div : 'div';
-
   return (
     <div className={`flex items-center ${sizeConfig.gap} select-none font-heading`}>
-      <Wrapper
-        whileHover={animated ? { rotate: 10, scale: 1.1 } : {}}
-        className="flex items-center justify-center transition-transform"
-      >
-        {/* STRICT RULE: Render the single logo asset */}
-        <img 
-          src={brandLogo} 
-          alt={`${brandName} Logo`} 
-          className={`${sizeConfig.img} object-contain`}
-        />
-      </Wrapper>
+      {animated ? (
+        <motion.div
+          whileHover={{ rotate: 10, scale: 1.1 }}
+          className="flex items-center justify-center transition-transform"
+        >
+          <img 
+            src={brandLogo} 
+            alt={`${brandName} Logo`} 
+            className={`${sizeConfig.img} object-contain`}
+          />
+        </motion.div>
+      ) : (
+        <div className="flex items-center justify-center transition-transform">
+          <img 
+            src={brandLogo} 
+            alt={`${brandName} Logo`} 
+            className={`${sizeConfig.img} object-contain`}
+          />
+        </div>
+      )}
       
       {variant === 'full' && (
         <span className={`font-bold tracking-tight leading-none ${textColorClass} ${sizeConfig.text}`}>

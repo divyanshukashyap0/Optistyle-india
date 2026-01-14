@@ -9,6 +9,7 @@ import { generateAIResponse } from './services/deepseekClient.ts';
 import paymentRoutes from './routes/payment.routes.ts';
 import adminRoutes from './routes/admin.routes.ts';
 import addressRoutes from './routes/address.routes.ts';
+import orderRoutes from './routes/order.routes.ts';
 import './config/firebase.ts'; 
 import { ENV } from './config/env.ts';
 import { getAllProducts, getAllOrders, getSystemSettings } from './services/db.ts';
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/address', addressRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Public Routes
 app.get('/api/products', async (req, res) => {
@@ -93,7 +95,7 @@ app.get('/', (req, res) => {
   res.send('OptiStyle API is Running');
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend running on port ${PORT}`);
 });
 

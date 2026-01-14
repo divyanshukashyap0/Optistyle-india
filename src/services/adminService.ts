@@ -68,15 +68,33 @@ export const getDashboardStats = async () => {
       api.get(endpoints.orders)
     ]);
 
-    const stats = statsRes.data;
-    const orders = ordersRes.data as Order[];
-    
+    const stats = statsRes.data || {};
+    const orders = (ordersRes.data as Order[]) || [];
+
+    const codOrders = orders.filter(o => o.paymentMethod === 'COD');
+    const onlineOrders = orders.filter(o => o.paymentMethod !== 'COD');
+
+    const pendingOrders = orders.filter(
+      o => o.status === 'pending' || o.status === 'cod_pending'
+    ).length;
+
+    const pendingCODRevenue = orders
+      .filter(o => o.status === 'cod_pending')
+      .reduce((acc, o) => acc + (o.total || 0), 0);
+
+    const paymentSplit = stats.paymentSplit || {
+      online: onlineOrders.length,
+      cod: codOrders.length
+    };
+
     return {
       totalRevenue: stats.totalRevenue || 0,
-      totalOrders: stats.totalOrders || 0,
-      pendingOrders: orders.filter(o => o.status === 'pending').length,
+      pendingCODRevenue,
+      totalOrders: stats.totalOrders || orders.length,
+      pendingOrders,
       totalUsers: stats.totalUsers || 0,
-      lowStock: 0
+      lowStock: stats.lowStock || 0,
+      paymentSplit
     };
   } catch (error) {
     console.error("Failed to fetch dashboard stats", error);
@@ -85,7 +103,12 @@ export const getDashboardStats = async () => {
       totalOrders: 0,
       pendingOrders: 0,
       totalUsers: 0,
-      lowStock: 0
+      lowStock: 0,
+      pendingCODRevenue: 0,
+      paymentSplit: {
+        online: 0,
+        cod: 0
+      }
     };
   }
 };

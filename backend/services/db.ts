@@ -68,6 +68,12 @@ export const getAllOrders = async (): Promise<Order[]> => {
   return snapshot.docs.map(doc => doc.data() as Order);
 };
 
+export const getUserOrders = async (uid: string): Promise<Order[]> => {
+  const snapshot = await getOrdersCol().where('userId', '==', uid).get();
+  const orders = snapshot.docs.map(doc => doc.data() as Order);
+  return orders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
 // --- PRODUCTS ---
 
 export const getAllProducts = async (): Promise<any[]> => {

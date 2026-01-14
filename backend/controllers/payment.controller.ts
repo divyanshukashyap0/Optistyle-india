@@ -12,6 +12,7 @@ import {
   getOrderById, 
   updateAnalytics 
 } from '../services/db.ts';
+import type { AuthRequest } from '../middleware/authMiddleware.ts';
 import type { Order } from '../../src/types/index.ts';
 
 interface CreateOrderBody {
@@ -35,6 +36,9 @@ export const createOrder = async (req: Request<{}, {}, CreateOrderBody>, res: Re
     const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const internalOrderId = `ORD-${Date.now()}`;
 
+    const authUser = (req as AuthRequest).user;
+    const userId = authUser?.uid || user.email;
+
     const baseOrder: Order = {
       id: internalOrderId,
       invoiceNumber,
@@ -46,7 +50,7 @@ export const createOrder = async (req: Request<{}, {}, CreateOrderBody>, res: Re
       items,
       user,
       date: new Date().toISOString(),
-      userId: user.email, // Using email as user ID fallback if not provided context
+      userId,
       status: paymentMethod === 'COD' ? 'cod_pending' : 'pending'
     };
 

@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/Button';
 import { User as UserIcon, Package, LogOut } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
+import { api } from '../services/api';
+import { Order } from '../types';
 
 export const Profile: React.FC = () => {
   const { user, logout } = useAuth();
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    api
+      .get('/orders/my-orders')
+      .then(res => {
+        const orders = res.data as Order[];
+        setRecentOrders(orders.slice(0, 3));
+      })
+      .catch(() => {
+        setRecentOrders([]);
+      })
+      .finally(() => {
+        setLoadingOrders(false);
+      });
+  }, []);
 
   if (!user) return <Navigate to="/login" />;
 
@@ -43,12 +62,54 @@ export const Profile: React.FC = () => {
 
         <div className="col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <h3 className="font-bold text-lg mb-4">Recent Activity</h3>
-          <p className="text-slate-500">No recent orders found.</p>
-          <div className="mt-6">
-            <Link to="/shop">
-              <Button>Start Shopping</Button>
-            </Link>
-          </div>
+          {loadingOrders ? (
+            <p className="text-slate-500">Loading recent orders...</p>
+          ) : recentOrders.length === 0 ? (
+            <>
+              <p className="text-slate-500">No recent orders found.</p>
+              <div className="mt-6">
+                <Link to="/shop">
+                  <Button>Start Shopping</Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              {recentOrders.map(order => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between border border-slate-100 rounded-lg p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-100 rounded-full">
+                      <Package className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">
+                        Order #{order.id}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Placed on {new Date(order.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-slate-900">
+                      ₹{order.total}
+                    </p>
+                    <p className="text-xs text-brand-600 mt-1">View details</p>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2">
+                <Link to="/orders">
+                  <Button variant="outline" size="sm">
+                    View all orders
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

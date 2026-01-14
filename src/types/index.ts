@@ -36,6 +36,7 @@ export interface User {
   role: 'user' | 'admin';
   isDisabled?: boolean;
   lastLogin?: string;
+  isAnonymous?: boolean;
 }
 
 export interface Address {

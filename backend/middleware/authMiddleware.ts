@@ -11,6 +11,45 @@ export interface AuthRequest extends Request {
   };
 }
 
+export const verifyUser = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decodedToken = await auth.verifyIdToken(token);
+
+    let role = 'user';
+
+    try {
+      const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+      if (userDoc.exists) {
+        const data = userDoc.data();
+        if (data?.role) {
+          role = data.role;
+        }
+      }
+    } catch (e) {
+      console.warn('[Auth Middleware] Failed to fetch user role, defaulting to user');
+    }
+
+    (req as AuthRequest).user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      role
+    };
+
+    next();
+  } catch (error) {
+    console.error('[Auth Middleware] User Verification Failed:', error);
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  }
+};
+
 export const verifyAdmin = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 

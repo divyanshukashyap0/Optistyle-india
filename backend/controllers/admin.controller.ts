@@ -203,11 +203,40 @@ export const processRefundDecision = async (req: Request, res: Response) => {
              return res.status(400).json({ success: false, message: 'No Payment ID found for Online Order' });
         }
 
-        const instance = getRazorpayClient();
-        await instance.payments.refund(order.paymentId, {
-            speed: 'normal',
-            notes: { reason: order.refundReason || 'Admin Approved Return' }
-        });
+        const paymentId = order.paymentId;
+        const isLikelyRazorpayPayment = typeof paymentId === 'string' && paymentId.startsWith('pay_');
+
+        if (!isLikelyRazorpayPayment) {
+             await updateOrderInDB(orderId, {
+                 refundStatus: 'FAILED',
+                 failureReason: 'Invalid payment reference for online refund'
+             });
+             await createRefundRecord({ ...refundData, status: 'FAILED', type: 'ONLINE_AUTO' });
+             await logAdminAction(adminId, 'REFUND_FAIL_ONLINE_INVALID_ID', `Order: ${orderId}`);
+             return res.status(400).json({ success: false, message: 'Invalid payment reference for online refund' });
+        }
+
+        try {
+             const instance = getRazorpayClient();
+             await instance.payments.refund(paymentId, {
+                 speed: 'normal',
+                 notes: { reason: order.refundReason || 'Admin Approved Return' }
+             });
+        } catch (gatewayError: any) {
+             console.error("Refund Processing Error", gatewayError);
+             const description = gatewayError?.error?.description || gatewayError?.description || 'Refund processing failed at payment gateway';
+             const statusCode = typeof gatewayError?.statusCode === 'number' ? gatewayError.statusCode : 502;
+
+             await updateOrderInDB(orderId, {
+                 refundStatus: 'FAILED',
+                 failureReason: description
+             });
+
+             await createRefundRecord({ ...refundData, status: 'FAILED', type: 'ONLINE_AUTO' });
+             await logAdminAction(adminId, 'REFUND_APPROVE_ONLINE_FAILED', `Order: ${orderId} - ${description}`);
+
+             return res.status(statusCode).json({ success: false, message: description });
+        }
 
         await updateOrderInDB(orderId, {
              refundStatus: 'REFUNDED',

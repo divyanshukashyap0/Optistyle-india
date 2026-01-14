@@ -126,19 +126,6 @@ export const startPayment = async (details: PaymentDetails): Promise<{ success: 
 
   } catch (err: any) {
     console.error("Payment Start Error:", err);
-    
-    let errorMessage = err.response?.data?.message || err.message || "Something went wrong";
-    
-    // Detect Network Error (Backend unreachable)
-    if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
-      console.error("Network Error Details:", { 
-        baseURL: api.defaults.baseURL, 
-        endpoint: '/payment/create-order',
-        originalError: err 
-      });
-      errorMessage = "Cannot connect to server. Is the backend running on port 5000?";
-    }
-
-    return { success: false, error: errorMessage };
+    return { success: false, error: err.message || "Something went wrong" };
   }
 };

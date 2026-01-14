@@ -1,10 +1,11 @@
 import express from 'express';
 import { createOrder, verifyPayment, requestRefund, downloadInvoice } from '../controllers/payment.controller.ts';
+import { verifyUser } from '../middleware/authMiddleware.ts';
 
 const router = express.Router();
 
 // Checkout
-router.post('/create-order', createOrder);
+router.post('/create-order', verifyUser, createOrder);
 router.post('/verify', verifyPayment);
 
 // User Actions

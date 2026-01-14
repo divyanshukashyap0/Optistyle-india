@@ -1,11 +1,9 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { PRODUCTS } from '../constants';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import { PageTransition, staggerContainer, staggerItem } from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Skeleton } from '../components/Skeleton';
 
 export const Shop: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -93,13 +91,13 @@ export const Shop: React.FC = () => {
         {/* Product Grid */}
         <div className="flex-1">
           <div className="flex justify-between items-center mb-6">
-            <div className="text-slate-500 text-sm font-medium">
+            <p className="text-slate-500 text-sm font-medium">
               {loading ? (
-                <Skeleton className="h-4 w-24" />
+                <span className="h-4 w-24 bg-slate-200 animate-pulse rounded inline-block"></span>
               ) : (
-                <p>{`${filteredProducts.length} styles found`}</p>
+                `${filteredProducts.length} styles found`
               )}
-            </div>
+            </p>
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-slate-500" />
               <select className="bg-transparent text-sm border-none focus:ring-0 text-slate-700 font-medium cursor-pointer">
@@ -122,13 +120,11 @@ export const Shop: React.FC = () => {
               >
                 {[...Array(6)].map((_, i) => (
                   <motion.div variants={staggerItem} key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100 p-0">
-                    <Skeleton className="aspect-square w-full rounded-none" />
+                    <div className="aspect-square bg-slate-200 animate-pulse" />
                     <div className="p-4 space-y-3">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <div className="flex items-center gap-2 mt-4">
-                         <Skeleton className="h-5 w-16" />
-                      </div>
+                      <div className="h-6 bg-slate-200 animate-pulse rounded w-3/4" />
+                      <div className="h-4 bg-slate-200 animate-pulse rounded w-1/2" />
+                      <div className="h-5 bg-slate-200 animate-pulse rounded w-1/4" />
                     </div>
                   </motion.div>
                 ))}

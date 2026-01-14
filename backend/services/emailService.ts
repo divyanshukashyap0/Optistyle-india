@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import nodemailer from 'nodemailer';
+import { ENV } from '../config/env.ts';
 import type { VisionEstimation } from "../../src/services/eyeTestLogic.ts";
 import type { CartItem, Order } from "../../src/types/index.ts";
 
@@ -258,31 +259,145 @@ export const generateInvoice = (
   doc.save(`OptiStyle_Invoice_${orderId}.pdf`);
 };
 
-/* =======================
-   EMAIL SERVICE
-======================= */
+const emailConfig = ENV.EMAIL;
+const hasOAuthCredentials =
+  !!emailConfig.CLIENT_ID &&
+  !!emailConfig.CLIENT_SECRET &&
+  !!emailConfig.REFRESH_TOKEN &&
+  !!emailConfig.SENDER;
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'optistyle.india@gmail.com',
-    pass: process.env.EMAIL_PASS || 'mock_password'
-  }
-});
+const transporter = hasOAuthCredentials
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: emailConfig.SENDER,
+        clientId: emailConfig.CLIENT_ID,
+        clientSecret: emailConfig.CLIENT_SECRET,
+        refreshToken: emailConfig.REFRESH_TOKEN,
+      },
+    })
+  : nodemailer.createTransport({
+      jsonTransport: true,
+    });
 
 export const sendOrderEmails = async (order: Order, pdfBuffer: Buffer) => {
   if (!order.user.email) return;
 
+  const textColor = '#0f172a';
+  const mutedText = '#64748b';
+  const borderColor = '#e2e8f0';
+  const accentColor = '#2563EB';
+
+  const rowsHtml = order.items
+    .map(item => {
+      const lensPrice = item.selectedLens?.price || 0;
+      const unitPrice = item.price + lensPrice;
+      const lineTotal = unitPrice * item.quantity;
+      const name = item.selectedLens
+        ? `${item.name} + ${item.selectedLens.name}`
+        : item.name;
+      return `
+        <tr>
+          <td style="padding:8px 10px;border:1px solid ${borderColor};font-size:12px;">${name}</td>
+          <td style="padding:8px 10px;border:1px solid ${borderColor};font-size:12px;text-align:right;">₹${unitPrice.toFixed(2)}</td>
+          <td style="padding:8px 10px;border:1px solid ${borderColor};font-size:12px;text-align:center;">${item.quantity}</td>
+          <td style="padding:8px 10px;border:1px solid ${borderColor};font-size:12px;text-align:right;">₹${lineTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const amount = order.total.toFixed(2);
+
+  const itemsPreview = order.items
+    .slice(0, 3)
+    .map(i => `${i.name}${i.selectedLens ? ` + ${i.selectedLens.name}` : ''} × ${i.quantity}`)
+    .join(' • ');
+
+  const hasMoreItems = order.items.length > 3;
+
   const mailOptions = {
-    from: '"OptiStyle" <optistyle.india@gmail.com>',
+    from: `"OptiStyle" <${emailConfig.SENDER || 'optistyle.india@gmail.com'}>`,
     to: order.user.email,
     subject: `Order Confirmation - ${order.id}`,
     html: `
-      <h1>Thank you for your order!</h1>
-      <p>Hi ${order.user.name},</p>
-      <p>Your order <strong>${order.id}</strong> has been confirmed.</p>
-      <p>Total Amount: ₹${order.total}</p>
-      <p>Please find the invoice attached.</p>
+      <div style="background:#f8fafc;padding:24px 0;">
+        <div style="max-width:680px;margin:0 auto;background:#ffffff;border-radius:4px;border:1px solid ${borderColor};font-family:Arial,Helvetica,sans-serif;color:${textColor};">
+          <div style="padding:16px 18px;border-bottom:2px solid ${accentColor};display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:22px;font-weight:bold;letter-spacing:0.03em;">OptiStyle</div>
+            <div style="font-size:11px;color:${mutedText};text-align:right;line-height:1.4;">
+              <div>Order ID: <span style="font-weight:600;color:${textColor};">${order.id}</span></div>
+              <div>Placed on ${new Date(order.date).toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+
+          <div style="padding:18px 20px 10px 20px;font-size:13px;line-height:1.6;">
+            <p style="margin:0 0 4px 0;">
+              Your OptiStyle order for amount <strong>₹${amount}</strong> has been placed successfully.
+            </p>
+            <p style="margin:0;color:${mutedText};">
+              Thank you for shopping with us at OptiStyle.
+            </p>
+          </div>
+
+          <div style="padding:6px 20px 4px 20px;font-size:13px;font-weight:bold;">
+            Order details
+          </div>
+
+          <div style="padding:0 20px 10px 20px;">
+            <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border:1px solid ${borderColor};font-size:12px;">
+              <thead>
+                <tr style="background:#f9fafb;">
+                  <th align="left" style="padding:8px 10px;border:1px solid ${borderColor};font-weight:bold;">Product Name</th>
+                  <th align="right" style="padding:8px 10px;border:1px solid ${borderColor};font-weight:bold;">Price</th>
+                  <th align="center" style="padding:8px 10px;border:1px solid ${borderColor};font-weight:bold;">Quantity</th>
+                  <th align="right" style="padding:8px 10px;border:1px solid ${borderColor};font-weight:bold;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml || `
+                  <tr>
+                    <td colspan="4" style="padding:10px;border:1px solid ${borderColor};color:${mutedText};text-align:center;">
+                      Items will appear here once added.
+                    </td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="padding:4px 20px 16px 20px;font-size:12px;line-height:1.6;">
+            <div>Order total: <span style="font-weight:bold;">₹${amount}</span></div>
+            <div style="color:#b91c1c;font-weight:bold;margin-top:2px;">Grand Total: ₹${amount}</div>
+          </div>
+
+          <div style="padding:10px 20px 4px 20px;font-size:13px;font-weight:bold;border-top:1px solid ${borderColor};">
+            Delivery Information
+          </div>
+          <div style="padding:2px 20px 18px 20px;font-size:12px;line-height:1.7;color:${mutedText};">
+            <div><span style="font-weight:bold;color:${textColor};">Name:</span> ${order.user.name}</div>
+            <div><span style="font-weight:bold;color:${textColor};">Address:</span> ${order.user.address || 'Address not provided'}, ${order.user.city || ''} ${order.user.state || ''} ${order.user.zip || ''}</div>
+            ${order.user.phone ? `<div><span style="font-weight:bold;color:${textColor};">Mobile no.:</span> ${order.user.phone}</div>` : ''}
+            <div><span style="font-weight:bold;color:${textColor};">Email:</span> ${order.user.email}</div>
+          </div>
+
+          <div style="padding:12px 20px;border-top:1px solid ${borderColor};display:flex;align-items:center;justify-content:space-between;font-size:11px;color:${mutedText};">
+            <div>
+              Customer Support: <span style="color:${accentColor};">optistyle.india@gmail.com</span><br/>
+              Customer Hotline: +91-80053 43226
+            </div>
+            <div style="text-align:right;">
+              <div style="font-weight:bold;color:${textColor};margin-bottom:4px;">OptiStyle</div>
+              <div>Eyewear • Eye Care • Everyday Comfort</div>
+            </div>
+          </div>
+
+          <div style="padding:10px 20px 16px 20px;border-top:1px solid ${borderColor};text-align:center;font-size:11px;color:${mutedText};">
+            You can also access this invoice anytime from the Orders section in your OptiStyle account.
+          </div>
+        </div>
+      </div>
     `,
     attachments: [
       {
