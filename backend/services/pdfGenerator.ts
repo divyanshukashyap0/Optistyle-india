@@ -136,6 +136,7 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
         y += 18;
         if (index < order.items.length - 1) {
           doc.moveTo(PAGE_LEFT, y - 6).lineTo(PAGE_RIGHT, y - 6).strokeColor(BORDER).lineWidth(0.5).stroke();
+        }
       });
 
       // --- TOTALS ---
@@ -155,7 +156,7 @@ export const generateInvoiceBuffer = (order: Order): Promise<Buffer> => {
           y += 14;
         };
 
-        drawRow('Taxable Amount', ₹(t.taxableAmount));
+        drawRow('Taxable Amount', formatCurrency(t.taxableAmount));
 
         if (t.isInterState) {
           drawRow(`IGST (${GST_CONFIG.GST_RATE * 100}%)`, formatCurrency(t.igst));

@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (err.code === 'auth/user-not-found') msg = "No account found with this email.";
       if (err.code === 'auth/wrong-password') msg = "Incorrect password.";
       if (err.code === 'auth/invalid-email') msg = "Invalid email address.";
-      if (err.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+      if (err.code === 'auth/invalid-credential') msg = "Incorrect email or password.";
       setError(msg);
       setIsLoading(false);
       throw new Error(msg);
