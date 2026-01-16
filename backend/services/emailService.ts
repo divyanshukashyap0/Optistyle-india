@@ -23,10 +23,18 @@ const COLORS = {
 const MARGIN = 20;
 const CONTENT_START_Y = 60;
 
-// Helpers for colors
 const setFill = (doc: jsPDF, color: number[]) => doc.setFillColor(color[0], color[1], color[2]);
 const setText = (doc: jsPDF, color: number[]) => doc.setTextColor(color[0], color[1], color[2]);
 const setDraw = (doc: jsPDF, color: number[]) => doc.setDrawColor(color[0], color[1], color[2]);
+
+const splitToWidth = (doc: jsPDF, text: string, maxWidth: number) => {
+  if (!text) return [""];
+  const splitter = (doc as any).splitTextToSize;
+  if (typeof splitter === "function") {
+    return splitter.call(doc, text, maxWidth);
+  }
+  return [text];
+};
 
 
 /* =======================
@@ -202,6 +210,33 @@ export const generateEyeTestCertificate = async (
   doc.text("of this test result. Scan with any QR reader", 30, y + 27);
   doc.text("to validate patient details and scores.", 30, y + 32);
 
+  const disclaimerStartY = y + 70;
+  const text1 =
+    "This certificate represents the results of an AI-assisted vision screening. It is NOT a medical prescription.";
+  const text2 =
+    "Please consult a certified optometrist or ophthalmologist for a comprehensive eye exam before purchasing prescription lenses.";
+
+  const maxWidth = pageWidth - 50;
+  const lines1 = splitToWidth(doc, text1, maxWidth);
+  const lines2 = splitToWidth(doc, text2, maxWidth);
+  const lineHeight = 4;
+  const boxHeight = Math.max(20, 8 + 5 + (lines1.length + lines2.length) * lineHeight + 4);
+  const disclaimerY = Math.min(disclaimerStartY, pageHeight - (boxHeight + 20));
+
+  doc.setDrawColor(252, 165, 165);
+  doc.setFillColor(254, 242, 242);
+  doc.setTextColor(185, 28, 28);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.roundedRect(MARGIN, disclaimerY, pageWidth - 40, boxHeight, 2, 2, "FD");
+  doc.text("MEDICAL DISCLAIMER:", 25, disclaimerY + 8);
+
+  doc.setFont("helvetica", "normal");
+  setText(doc, COLORS.text);
+  const textStartY = disclaimerY + 13;
+  doc.text(lines1, 25, textStartY);
+  doc.text(lines2, 25, textStartY + lines1.length * lineHeight);
+
   drawFooters(doc, pageWidth, pageHeight);
   doc.save(`OptiStyle_Report_${certId}.pdf`);
 };
@@ -281,7 +316,7 @@ const transporter = hasOAuthCredentials
       jsonTransport: true,
     });
 
-export const sendOrderEmails = async (order: Order, pdfBuffer: Buffer) => {
+export const sendOrderEmails = async (order: Order) => {
   if (!order.user.email) return;
 
   const textColor = '#0f172a';
@@ -399,12 +434,6 @@ export const sendOrderEmails = async (order: Order, pdfBuffer: Buffer) => {
         </div>
       </div>
     `,
-    attachments: [
-      {
-        filename: `Invoice_${order.id}.pdf`,
-        content: pdfBuffer
-      }
-    ]
   };
 
   try {

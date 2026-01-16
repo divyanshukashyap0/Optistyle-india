@@ -58,9 +58,7 @@ export const createOrder = async (req: Request<{}, {}, CreateOrderBody>, res: Re
     if (paymentMethod === 'COD') {
       await createOrderInDB(baseOrder);
 
-      generateInvoiceBuffer(baseOrder)
-        .then((pdfBuffer) => sendOrderEmails(baseOrder, pdfBuffer))
-        .catch((err) => console.error("COD Email Error:", err));
+      sendOrderEmails(baseOrder).catch((err) => console.error("COD Email Error:", err));
 
       return res.status(200).json({
         success: true,
@@ -144,9 +142,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
 
       console.log(`✅ Order ${order.id} verified.`);
 
-      generateInvoiceBuffer(updatedOrder)
-        .then((pdfBuffer) => sendOrderEmails(updatedOrder, pdfBuffer))
-        .catch((err) => console.error("Workflow Error:", err));
+      sendOrderEmails(updatedOrder).catch((err) => console.error("Workflow Error:", err));
 
       return res.status(200).json({
         success: true,

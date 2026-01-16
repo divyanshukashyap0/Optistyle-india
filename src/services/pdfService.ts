@@ -4,7 +4,6 @@ import "jspdf-autotable";
 import { VisionEstimation } from "./eyeTestLogic";
 import { CartItem } from "../types";
 
-// --- THEME CONSTANTS ---
 const COLORS = {
     primary: [37, 99, 235], // Brand Blue (#2563EB)
     secondary: [15, 23, 42], // Slate 900 (#0F172A)
@@ -16,7 +15,15 @@ const COLORS = {
     success: [22, 163, 74]   // Green 600
 };
 
-// --- HELPER FUNCTIONS ---
+const splitToWidth = (doc: any, text: string, maxWidth: number) => {
+    if (!text) return [""];
+    const splitter = (doc as any).splitTextToSize;
+    if (typeof splitter === "function") {
+        return splitter.call(doc, text, maxWidth);
+    }
+    return [text];
+};
+
 const drawHeader = (doc: any, pageWidth: number) => {
     // Top Bar
     doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
@@ -248,29 +255,31 @@ export const generateEyeTestCertificate = async (
 };
 
 const finishPDF = (doc: any, pageWidth: number, pageHeight: number, certId: string, startY: number) => {
-    // --- DISCLAIMER ---
-    const disclaimerY = Math.min(startY, pageHeight - 45); // Ensure it doesn't push off page
-    
-    doc.setDrawColor(252, 165, 165); // Red 300
-    doc.setFillColor(254, 242, 242); // Red 50
-    // Fix: Added missing ry parameter (2, 2)
-    doc.roundedRect(20, disclaimerY, pageWidth - 40, 20, 2, 2, 'FD');
-    
-    doc.setTextColor(185, 28, 28); // Red 700
+    const text1 = "This certificate represents the results of an AI-assisted vision screening. It is NOT a medical prescription.";
+    const text2 = "Please consult a certified optometrist or ophthalmologist for a comprehensive eye exam before purchasing prescription lenses.";
+
+    doc.setDrawColor(252, 165, 165);
+    doc.setFillColor(254, 242, 242);
+    doc.setTextColor(185, 28, 28);
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
+
+    const maxWidth = pageWidth - 50;
+    const lines1 = splitToWidth(doc, text1, maxWidth);
+    const lines2 = splitToWidth(doc, text2, maxWidth);
+    const lineHeight = 4;
+    const boxHeight = Math.max(20, 8 + 5 + (lines1.length + lines2.length) * lineHeight + 4);
+    const disclaimerY = Math.min(startY, pageHeight - (boxHeight + 20));
+
+    doc.roundedRect(20, disclaimerY, pageWidth - 40, boxHeight, 2, 2, 'FD');
     doc.text("MEDICAL DISCLAIMER:", 25, disclaimerY + 8);
-    
+
     doc.setFont("helvetica", "normal");
     doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
-    doc.text(
-        "This certificate represents the results of an AI-assisted vision screening. It is NOT a medical prescription.",
-        25, disclaimerY + 13
-    );
-    doc.text(
-        "Please consult a certified optometrist or ophthalmologist for a comprehensive eye exam before purchasing prescription lenses.",
-        25, disclaimerY + 17
-    );
+
+    const textStartY = disclaimerY + 13;
+    doc.text(lines1, 25, textStartY);
+    doc.text(lines2, 25, textStartY + lines1.length * lineHeight);
 
     drawFooter(doc, pageWidth, pageHeight);
     doc.save(`OptiStyle_Report_${certId}.pdf`);

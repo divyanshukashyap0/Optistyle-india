@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Package, Clock, Download, Undo2, AlertTriangle, CheckCircle } from 'lucide-react';
-import { api, requestOrderRefund } from '../services/api';
-import { generateInvoice } from '../services/pdfService';
+import { api, requestOrderRefund, downloadOrderInvoice } from '../services/api';
 import { Order } from '../types';
 import { Button } from '../components/Button';
 
@@ -91,18 +90,12 @@ export const Orders: React.FC = () => {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => generateInvoice(
-                            order.id, 
-                            {
-                                name: order.user.name,
-                                email: order.user.email,
-                                address: order.user.address || 'N/A',
-                                city: order.user.city || 'N/A',
-                                zip: order.user.zip || 'N/A'
-                            },
-                            order.items,
-                            order.total
-                        )} className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadOrderInvoice(order.id)}
+                            className="flex items-center gap-2"
+                        >
                             <Download className="w-4 h-4" /> Invoice
                         </Button>
                         

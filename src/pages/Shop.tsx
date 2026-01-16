@@ -8,6 +8,174 @@ import { Skeleton } from '../components/Skeleton';
 import { Product } from '../types';
 import { api, endpoints } from '../services/api';
 
+const FiltersPanel = ({
+  selectedCategory,
+  setSelectedCategory,
+  selectedShape,
+  setSelectedShape,
+  priceRange,
+  setPriceRange,
+}: {
+  selectedCategory: string;
+  setSelectedCategory: (value: string) => void;
+  selectedShape: string;
+  setSelectedShape: (value: string) => void;
+  priceRange: [number, number];
+  setPriceRange: (value: [number, number]) => void;
+}) => {
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-2 text-lg font-bold font-serif mb-2">
+        <Filter className="w-5 h-5" /> Filters
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-3">Category</h3>
+        <div className="space-y-2">
+          {['all', 'men', 'women', 'unisex', 'sunglasses'].map(cat => (
+            <label key={cat} className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  type="radio"
+                  name="category"
+                  checked={selectedCategory === cat}
+                  onChange={() => setSelectedCategory(cat)}
+                  className="peer h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+                />
+              </div>
+              <span
+                className={`capitalize transition-colors ${
+                  selectedCategory === cat
+                    ? 'text-brand-600 font-medium'
+                    : 'text-slate-600 group-hover:text-slate-900'
+                }`}
+              >
+                {cat}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-3">Frame Shape</h3>
+        <div className="flex flex-wrap gap-2">
+          {['all', 'round', 'square', 'aviator', 'cat-eye', 'rectangle'].map(shape => (
+            <motion.button
+              key={shape}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedShape(shape)}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                selectedShape === shape
+                  ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600'
+              }`}
+            >
+              {shape.replace('-', ' ')}
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold mb-3">Price Range</h3>
+        <div className="space-y-2 text-sm">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="radio"
+              name="price"
+              checked={priceRange[0] === 0 && priceRange[1] === Infinity}
+              onChange={() => setPriceRange([0, Infinity])}
+              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span
+              className={
+                priceRange[0] === 0 && priceRange[1] === Infinity
+                  ? 'text-brand-600 font-medium'
+                  : 'text-slate-600 group-hover:text-slate-900'
+              }
+            >
+              All prices
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="radio"
+              name="price"
+              checked={priceRange[0] === 0 && priceRange[1] === 999}
+              onChange={() => setPriceRange([0, 999])}
+              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span
+              className={
+                priceRange[0] === 0 && priceRange[1] === 999
+                  ? 'text-brand-600 font-medium'
+                  : 'text-slate-600 group-hover:text-slate-900'
+              }
+            >
+              Under ₹1000
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="radio"
+              name="price"
+              checked={priceRange[0] === 1000 && priceRange[1] === 1999}
+              onChange={() => setPriceRange([1000, 1999])}
+              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span
+              className={
+                priceRange[0] === 1000 && priceRange[1] === 1999
+                  ? 'text-brand-600 font-medium'
+                  : 'text-slate-600 group-hover:text-slate-900'
+              }
+            >
+              ₹1000 – ₹1999
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="radio"
+              name="price"
+              checked={priceRange[0] === 2000 && priceRange[1] === 2999}
+              onChange={() => setPriceRange([2000, 2999])}
+              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span
+              className={
+                priceRange[0] === 2000 && priceRange[1] === 2999
+                  ? 'text-brand-600 font-medium'
+                  : 'text-slate-600 group-hover:text-slate-900'
+              }
+            >
+              ₹2000 – ₹2999
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="radio"
+              name="price"
+              checked={priceRange[0] === 3000 && priceRange[1] === Infinity}
+              onChange={() => setPriceRange([3000, Infinity])}
+              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span
+              className={
+                priceRange[0] === 3000 && priceRange[1] === Infinity
+                  ? 'text-brand-600 font-medium'
+                  : 'text-slate-600 group-hover:text-slate-900'
+              }
+            >
+              ₹3000 and above
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Shop: React.FC = () => {
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
@@ -18,6 +186,7 @@ export const Shop: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [sortOption, setSortOption] = useState<'featured' | 'priceAsc' | 'priceDesc'>('featured');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -75,122 +244,21 @@ export const Shop: React.FC = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full md:w-64 space-y-8 sticky top-24 h-fit"
+          className="hidden md:block md:w-64 space-y-8 sticky top-24 h-fit"
         >
-          <div className="flex items-center gap-2 text-lg font-bold font-serif mb-6">
-            <Filter className="w-5 h-5" /> Filters
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3">Category</h3>
-            <div className="space-y-2">
-              {['all', 'men', 'women', 'unisex', 'sunglasses'].map(cat => (
-                <label key={cat} className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="radio" 
-                      name="category" 
-                      checked={selectedCategory === cat}
-                      onChange={() => setSelectedCategory(cat)}
-                      className="peer h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                    />
-                  </div>
-                  <span className={`capitalize transition-colors ${selectedCategory === cat ? 'text-brand-600 font-medium' : 'text-slate-600 group-hover:text-slate-900'}`}>{cat}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3">Frame Shape</h3>
-            <div className="flex flex-wrap gap-2">
-              {['all', 'round', 'square', 'aviator', 'cat-eye', 'rectangle'].map(shape => (
-                <motion.button
-                  key={shape}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedShape(shape)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    selectedShape === shape 
-                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600'
-                  }`}
-                >
-                  {shape.replace('-', ' ')}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3">Price Range</h3>
-            <div className="space-y-2 text-sm">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="price"
-                  checked={priceRange[0] === 0 && priceRange[1] === Infinity}
-                  onChange={() => setPriceRange([0, Infinity])}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className={priceRange[0] === 0 && priceRange[1] === Infinity ? 'text-brand-600 font-medium' : 'text-slate-600 group-hover:text-slate-900'}>
-                  All prices
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="price"
-                  checked={priceRange[0] === 0 && priceRange[1] === 999}
-                  onChange={() => setPriceRange([0, 999])}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className={priceRange[0] === 0 && priceRange[1] === 999 ? 'text-brand-600 font-medium' : 'text-slate-600 group-hover:text-slate-900'}>
-                  Under ₹1000
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="price"
-                  checked={priceRange[0] === 1000 && priceRange[1] === 1999}
-                  onChange={() => setPriceRange([1000, 1999])}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className={priceRange[0] === 1000 && priceRange[1] === 1999 ? 'text-brand-600 font-medium' : 'text-slate-600 group-hover:text-slate-900'}>
-                  ₹1000 – ₹1999
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="price"
-                  checked={priceRange[0] === 2000 && priceRange[1] === 2999}
-                  onChange={() => setPriceRange([2000, 2999])}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className={priceRange[0] === 2000 && priceRange[1] === 2999 ? 'text-brand-600 font-medium' : 'text-slate-600 group-hover:text-slate-900'}>
-                  ₹2000 – ₹2999
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="price"
-                  checked={priceRange[0] === 3000 && priceRange[1] === Infinity}
-                  onChange={() => setPriceRange([3000, Infinity])}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className={priceRange[0] === 3000 && priceRange[1] === Infinity ? 'text-brand-600 font-medium' : 'text-slate-600 group-hover:text-slate-900'}>
-                  ₹3000 and above
-                </span>
-              </label>
-            </div>
-          </div>
+          <FiltersPanel
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            selectedShape={selectedShape}
+            setSelectedShape={setSelectedShape}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+          />
         </motion.div>
 
         {/* Product Grid */}
         <div className="flex-1">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6 gap-3">
             <div className="text-slate-500 text-sm font-medium">
               {loading ? (
                 <Skeleton className="h-4 w-24" />
@@ -199,6 +267,14 @@ export const Shop: React.FC = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(true)}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-sm md:hidden"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+              </button>
               <SlidersHorizontal className="w-4 h-4 text-slate-500" />
               <select
                 className="bg-transparent text-sm border-none focus:ring-0 text-slate-700 font-medium cursor-pointer"
@@ -291,6 +367,47 @@ export const Shop: React.FC = () => {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {isFilterOpen && (
+          <motion.div
+            key="mobile-filters"
+            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsFilterOpen(false)}
+          >
+            <motion.div
+              className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 260, damping: 25 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm font-medium text-slate-900">Filters</div>
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen(false)}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                >
+                  Close
+                </button>
+              </div>
+              <FiltersPanel
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                selectedShape={selectedShape}
+                setSelectedShape={setSelectedShape}
+                priceRange={priceRange}
+                setPriceRange={setPriceRange}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 };
