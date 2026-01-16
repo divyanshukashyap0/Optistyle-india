@@ -27,10 +27,10 @@ export const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 font-sans ${
+    <nav className={`sticky top-0 z-50 transition-colors duration-300 font-sans py-3 ${
       scrolled 
-        ? 'bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm py-2' 
-        : 'bg-white border-b border-slate-100 py-4'
+        ? 'bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm' 
+        : 'bg-white border-b border-slate-100'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">

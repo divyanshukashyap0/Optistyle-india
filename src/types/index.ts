@@ -10,6 +10,7 @@ export interface Product {
   shape: 'round' | 'square' | 'aviator' | 'cat-eye' | 'rectangle';
   rating: number;
   image: string;
+  images?: string[];
   description: string;
   colors: string[];
 }
@@ -33,6 +34,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  photoURL?: string;
   role: 'user' | 'admin';
   isDisabled?: boolean;
   lastLogin?: string;

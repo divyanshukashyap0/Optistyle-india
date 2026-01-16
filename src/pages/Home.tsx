@@ -1,13 +1,58 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Star, Truck, ShieldCheck, Zap, User } from 'lucide-react';
+import { ArrowRight, Star, Truck, ShieldCheck, Zap, User, RefreshCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { PRODUCTS } from '../constants';
 import { PageTransition, staggerContainer, staggerItem } from '../components/PageTransition';
+import { Skeleton } from '../components/Skeleton';
+import { Product } from '../types';
+import { api, endpoints } from '../services/api';
 
 export const Home: React.FC = () => {
+  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(true);
+  const [refreshingTrending, setRefreshingTrending] = useState(false);
+
+  useEffect(() => {
+    const fetchTrending = async (silent: boolean) => {
+      if (silent) {
+        setRefreshingTrending(true);
+      } else {
+        setLoadingTrending(true);
+      }
+
+      try {
+        const response = await api.get(endpoints.products);
+        const products = (response.data as Product[]) || [];
+        setTrendingProducts(products.slice(0, 3));
+      } catch (error) {
+        setTrendingProducts([]);
+      } finally {
+        setLoadingTrending(false);
+        setRefreshingTrending(false);
+      }
+    };
+
+    fetchTrending(false);
+  }, []);
+
+  const handleRefreshTrending = () => {
+    setRefreshingTrending(true);
+    api
+      .get(endpoints.products)
+      .then(response => {
+        const products = (response.data as Product[]) || [];
+        setTrendingProducts(products.slice(0, 3));
+      })
+      .catch(() => {
+        setTrendingProducts([]);
+      })
+      .finally(() => {
+        setRefreshingTrending(false);
+      });
+  };
+
   return (
     <PageTransition className="w-full">
       {/* Hero Section */}
@@ -166,9 +211,25 @@ export const Home: React.FC = () => {
               <h2 className="text-3xl font-bold text-slate-900 mb-2 font-heading">Trending Now</h2>
               <p className="text-slate-500">Curated selections for the modern individual.</p>
             </div>
-            <Link to="/shop" className="text-brand-600 font-bold text-sm hover:text-brand-800 flex items-center group transition-colors">
-              View All Collection <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleRefreshTrending}
+                className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
+              >
+                <RefreshCcw
+                  className={`w-3 h-3 ${refreshingTrending ? 'animate-spin' : ''}`}
+                />
+                <span>{refreshingTrending ? 'Refreshing' : 'Refresh'}</span>
+              </button>
+              <Link
+                to="/shop"
+                className="text-brand-600 font-bold text-sm hover:text-brand-800 flex items-center group transition-colors"
+              >
+                View All Collection
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
           </div>
 
           <motion.div 
@@ -178,38 +239,60 @@ export const Home: React.FC = () => {
             viewport={{ once: true, margin: "-50px" }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {PRODUCTS.slice(0, 3).map((product) => (
-              <motion.div variants={staggerItem} key={product.id}>
-                <Link to={`/product/${product.id}`} className="group block h-full">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-200 h-full flex flex-col group-hover:-translate-y-1">
-                    <div className="aspect-[5/4] bg-slate-100 relative overflow-hidden">
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-                      {product.price < 1300 && (
-                          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-slate-900 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
-                              Best Seller
-                          </div>
-                      )}
-                    </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-bold text-slate-900 font-heading group-hover:text-brand-600 transition-colors">{product.name}</h3>
-                          <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
-                      </div>
-                      <p className="text-slate-400 text-xs mb-6 uppercase tracking-wider">{product.shape} · {product.category}</p>
-                      
-                      <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
-                        <span>View Details</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
+            {loadingTrending ? (
+              [...Array(3)].map((_, index) => (
+                <motion.div variants={staggerItem} key={index} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-full flex flex-col">
+                  <Skeleton className="aspect-[5/4] w-full" variant="rectangular" />
+                  <div className="p-6 space-y-4">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
-                </Link>
+                </motion.div>
+              ))
+            ) : trendingProducts.length === 0 ? (
+              <motion.div
+                variants={staggerItem}
+                className="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-2xl border border-dashed border-slate-300 p-8 flex items-center justify-center text-center"
+              >
+                <p className="text-slate-500 text-sm">
+                  No products available yet. Please check back soon.
+                </p>
               </motion.div>
-            ))}
+            ) : (
+              trendingProducts.map((product) => (
+                <motion.div variants={staggerItem} key={product.id}>
+                  <Link to={`/product/${product.id}`} className="group block h-full">
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-200 h-full flex flex-col group-hover:-translate-y-1">
+                      <div className="aspect-[5/4] bg-slate-100 relative overflow-hidden">
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                        {product.price < 1300 && (
+                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-slate-900 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
+                                Best Seller
+                            </div>
+                        )}
+                      </div>
+                      <div className="p-6 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-lg font-bold text-slate-900 font-heading group-hover:text-brand-600 transition-colors">{product.name}</h3>
+                            <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
+                        </div>
+                        <p className="text-slate-400 text-xs mb-6 uppercase tracking-wider">{product.shape} · {product.category}</p>
+                        
+                        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                          <span>View Details</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))
+            )}
           </motion.div>
         </div>
       </section>

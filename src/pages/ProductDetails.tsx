@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { PRODUCTS, LENS_OPTIONS } from '../constants';
+import { LENS_OPTIONS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { Button } from '../components/Button';
 import { Star, Check, UploadCloud } from 'lucide-react';
-import { LensOption } from '../types';
+import { LensOption, Product } from '../types';
 import { PageTransition } from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../components/Skeleton';
+import { api, endpoints } from '../services/api';
 
 export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState(PRODUCTS.find(p => p.id === id));
+  const [product, setProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
   
   const [selectedLens, setSelectedLens] = useState<LensOption>(LENS_OPTIONS[0]);
@@ -20,14 +21,42 @@ export const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
 
-  // Simulate API fetch delay
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      setProduct(PRODUCTS.find(p => p.id === id));
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    const fetchProduct = async () => {
+      if (!id) {
+        if (isMounted) {
+          setProduct(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setLoading(true);
+      }
+
+      try {
+        const response = await api.get(endpoints.product(id));
+        if (!isMounted) return;
+        const data = response.data as Product | null;
+        setProduct(data);
+      } catch (error) {
+        if (!isMounted) return;
+        setProduct(null);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProduct();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   if (!loading && !product) return <div>Product not found</div>;
@@ -62,34 +91,46 @@ export const ProductDetails: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden shadow-sm relative">
-                  <motion.img 
-                    key={activeImage}
-                    src={activeImage === 0 ? product!.image : `https://picsum.photos/800/600?random=${activeImage + 10}`}
-                    alt={product!.name} 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div 
-                      key={i} 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setActiveImage(i)}
-                      className={`aspect-square bg-slate-50 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${activeImage === i ? 'border-brand-600' : 'border-transparent'}`}
-                    >
-                      <img 
-                        src={i === 0 ? product!.image : `https://picsum.photos/400/400?random=${i + 10}`} 
-                        alt="Detail" 
-                        className="w-full h-full object-cover" 
+                {product && (
+                  <>
+                    <div className="aspect-[4/3] bg-slate-100 rounded-2xl overflow-hidden shadow-sm relative">
+                      <motion.img 
+                        key={activeImage}
+                        src={
+                          (product.images && product.images.length > 0
+                            ? product.images
+                            : [product.image])[activeImage]
+                        }
+                        alt={product.name} 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="w-full h-full object-cover"
                       />
-                    </motion.div>
-                  ))}
-                </div>
+                    </div>
+                    {product.images && product.images.length > 1 && (
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        {product.images.map((img, index) => (
+                          <motion.div 
+                            key={img}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setActiveImage(index)}
+                            className={`aspect-square bg-slate-50 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
+                              activeImage === index ? 'border-brand-600' : 'border-transparent'
+                            }`}
+                          >
+                            <img 
+                              src={img} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -4,9 +4,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/Button';
 import { useNavigate } from 'react-router-dom';
-import { generateInvoice } from '../services/pdfService';
 import { saveUserAddress } from '../services/addressService';
-import { api } from '../services/api';
+import { api, downloadOrderInvoice } from '../services/api';
 import { 
   CheckCircle, AlertTriangle, ShieldCheck, CreditCard, Banknote, 
   ChevronDown, ChevronUp, Truck, Download, MessageCircle, Save, Loader
@@ -50,6 +49,10 @@ export const Checkout: React.FC = () => {
   const [orderItems, setOrderItems] = useState<CartItem[]>(state.items);
   const [orderTotal, setOrderTotal] = useState(state.total);
 
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState<CheckoutForm>({
     firstName: user?.name?.split(' ')[0] || '',
     lastName: user?.name?.split(' ')[1] || '',
@@ -62,6 +65,10 @@ export const Checkout: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({});
+
+  const cartTotal = state.total;
+  const discount = appliedCoupon ? appliedCoupon.discount : 0;
+  const payableTotal = Math.max(0, cartTotal - discount);
 
   useEffect(() => {
     if (state.items.length === 0 && paymentStatus !== 'success') {
@@ -136,6 +143,28 @@ export const Checkout: React.FC = () => {
       });
   };
 
+  const handleApplyCoupon = () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      setCouponError('Please enter a coupon code');
+      setAppliedCoupon(null);
+      return;
+    }
+    if (code === 'WELCOME10') {
+      const discountValue = Math.round(cartTotal * 0.1);
+      if (discountValue <= 0) {
+        setCouponError('Cart value too low for this coupon');
+        setAppliedCoupon(null);
+        return;
+      }
+      setAppliedCoupon({ code, discount: discountValue });
+      setCouponError(null);
+    } else {
+      setCouponError('Invalid coupon code');
+      setAppliedCoupon(null);
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Partial<Record<keyof CheckoutForm, string>> = {};
     if (!formData.firstName) newErrors.firstName = "First name is required";
@@ -184,7 +213,7 @@ export const Checkout: React.FC = () => {
     }
 
     const result = await startPayment({
-      total: state.total,
+      total: payableTotal,
       items: state.items,
       user: formData,
       method: paymentMethod
@@ -194,7 +223,7 @@ export const Checkout: React.FC = () => {
 
     if (result.success && result.orderId) {
       setOrderItems(state.items);
-      setOrderTotal(state.total);
+      setOrderTotal(payableTotal);
       dispatch({ type: 'CLEAR_CART' });
       setOrderId(result.orderId);
       setPaymentStatus('success');
@@ -209,7 +238,7 @@ export const Checkout: React.FC = () => {
     setLoading(true);
     setErrorMsg(null);
     const result = await startPayment({
-      total: state.total,
+      total: payableTotal,
       items: state.items,
       user: formData,
       method: paymentMethod
@@ -217,7 +246,7 @@ export const Checkout: React.FC = () => {
     setLoading(false);
     if (result.success && result.orderId) {
       setOrderItems(state.items);
-      setOrderTotal(state.total);
+      setOrderTotal(payableTotal);
       dispatch({ type: 'CLEAR_CART' });
       setOrderId(result.orderId);
       setPaymentStatus('success');
@@ -240,18 +269,8 @@ export const Checkout: React.FC = () => {
   };
 
   const handleDownloadInvoice = () => {
-      generateInvoice(
-          orderId,
-          {
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-              address: formData.address,
-              city: formData.city,
-              zip: formData.zip
-          },
-          orderItems,
-          orderTotal
-      );
+      if (!orderId) return;
+      downloadOrderInvoice(orderId);
   };
 
   const handleFinish = () => {
@@ -473,7 +492,7 @@ export const Checkout: React.FC = () => {
           </div>
 
           <div className="lg:w-96 shrink-0">
-             <div className="lg:hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
+            <div className="lg:hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
                 <button 
                     onClick={() => setShowMobileSummary(!showMobileSummary)}
                     className="w-full flex items-center justify-between p-4 bg-slate-50"
@@ -482,7 +501,7 @@ export const Checkout: React.FC = () => {
                         <Truck className="w-4 h-4" /> Order Summary
                     </span>
                     <span className="flex items-center gap-2 text-brand-600 font-bold">
-                        ₹{state.total}
+                        ₹{payableTotal}
                         {showMobileSummary ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </span>
                 </button>
@@ -494,7 +513,24 @@ export const Checkout: React.FC = () => {
                             exit={{ height: 0 }}
                             className="overflow-hidden border-t border-slate-200"
                         >
-                            <SummaryContent items={state.items} total={state.total} deliveryInfo={deliveryInfo} />
+                            <CouponBox
+                                couponCode={couponCode}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                  setCouponCode(e.target.value);
+                                  if (couponError) setCouponError(null);
+                                }}
+                                onApply={handleApplyCoupon}
+                                error={couponError}
+                                appliedCoupon={appliedCoupon}
+                            />
+                            <SummaryContent
+                                items={state.items}
+                                subtotal={cartTotal}
+                                total={payableTotal}
+                                discount={discount}
+                                couponCode={appliedCoupon?.code}
+                                deliveryInfo={deliveryInfo}
+                            />
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -505,7 +541,24 @@ export const Checkout: React.FC = () => {
                     <div className="p-4 border-b border-slate-100 bg-slate-50">
                         <h3 className="font-bold text-slate-800">Order Summary</h3>
                     </div>
-                    <SummaryContent items={state.items} total={state.total} deliveryInfo={deliveryInfo} />
+                    <CouponBox
+                      couponCode={couponCode}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setCouponCode(e.target.value);
+                        if (couponError) setCouponError(null);
+                      }}
+                      onApply={handleApplyCoupon}
+                      error={couponError}
+                      appliedCoupon={appliedCoupon}
+                    />
+                    <SummaryContent
+                      items={state.items}
+                      subtotal={cartTotal}
+                      total={payableTotal}
+                      discount={discount}
+                      couponCode={appliedCoupon?.code}
+                      deliveryInfo={deliveryInfo}
+                    />
                  </div>
                  
                  <div className="mt-6 space-y-3">
@@ -520,11 +573,11 @@ export const Checkout: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:hidden z-40">
+         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:hidden z-40">
          <div className="flex gap-4 items-center">
              <div className="flex-1">
                  <p className="text-xs text-slate-500 uppercase font-bold">Total Payable</p>
-                 <p className="text-xl font-bold text-slate-900">₹{state.total}</p>
+                <p className="text-xl font-bold text-slate-900">₹{payableTotal}</p>
              </div>
              <Button 
                 onClick={() => {
@@ -534,13 +587,13 @@ export const Checkout: React.FC = () => {
                 className="flex-1 py-3 text-base shadow-lg shadow-brand-200"
                 loading={loading}
              >
-                {loading ? 'Processing' : `Pay ₹${state.total}`}
+                {loading ? 'Processing' : `Pay ₹${payableTotal}`}
              </Button>
          </div>
       </div>
 
       <div className="hidden md:block fixed bottom-0 left-0 right-0 lg:static">
-          <div className="max-w-7xl mx-auto px-4 relative">
+             <div className="max-w-7xl mx-auto px-4 relative">
              <div className="absolute bottom-10 right-[420px] w-64 hidden lg:block">
                  <Button 
                     form="checkout-form"
@@ -548,7 +601,7 @@ export const Checkout: React.FC = () => {
                     className="w-full py-4 text-lg shadow-xl shadow-brand-200 transform transition-transform hover:-translate-y-1"
                     loading={loading}
                  >
-                    {loading ? 'Processing Order...' : `Pay ₹${state.total}`}
+                    {loading ? 'Processing Order...' : `Pay ₹${payableTotal}`}
                  </Button>
              </div>
           </div>
@@ -588,6 +641,28 @@ const InputGroup: React.FC<any> = ({ label, error, prefix, hint, isLoading, clas
     </div>
 );
 
+const CouponBox: React.FC<any> = ({ couponCode, onChange, onApply, error, appliedCoupon }) => (
+    <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-3">
+        <div className="flex gap-2">
+            <input
+                value={couponCode}
+                onChange={onChange}
+                placeholder="Enter coupon code"
+                className="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 uppercase"
+            />
+            <Button type="button" onClick={onApply} className="px-4">
+                Apply
+            </Button>
+        </div>
+        {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
+        {!error && appliedCoupon && (
+            <p className="text-xs text-green-600 font-medium">
+                Coupon {appliedCoupon.code} applied – you saved ₹{appliedCoupon.discount}
+            </p>
+        )}
+    </div>
+);
+
 const PaymentOption: React.FC<any> = ({ title, description, icon: Icon, selected, onSelect, badge, disabled }) => (
     <div 
         onClick={!disabled ? onSelect : undefined}
@@ -622,7 +697,7 @@ const PaymentOption: React.FC<any> = ({ title, description, icon: Icon, selected
     </div>
 );
 
-const SummaryContent: React.FC<any> = ({ items, total, deliveryInfo }) => (
+const SummaryContent: React.FC<any> = ({ items, subtotal, total, discount, couponCode, deliveryInfo }) => (
     <div className="p-4 bg-white">
         <div className="space-y-4 mb-6">
             {items.map((item: any) => (
@@ -645,8 +720,16 @@ const SummaryContent: React.FC<any> = ({ items, total, deliveryInfo }) => (
         <div className="space-y-2 border-t border-slate-100 pt-4 text-sm">
             <div className="flex justify-between text-slate-600">
                 <span>Subtotal</span>
-                <span>₹{total}</span>
+                <span>₹{subtotal}</span>
             </div>
+            {discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                    <span className="text-sm">
+                        Coupon{couponCode ? ` (${couponCode})` : ''}
+                    </span>
+                    <span className="text-sm font-medium">-₹{discount}</span>
+                </div>
+            )}
             <div className="flex justify-between text-slate-600">
                 <span>Shipping</span>
                 {deliveryInfo?.type === 'EXPRESS' ? (

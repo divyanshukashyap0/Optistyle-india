@@ -15,7 +15,14 @@ export const AdminProducts: React.FC = () => {
   
   // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
-     name: '', price: 0, category: 'unisex', type: 'eyeglasses', shape: 'rectangle', description: '', image: ''
+     name: '',
+     price: 0,
+     category: 'unisex',
+     type: 'eyeglasses',
+     shape: 'rectangle',
+     description: '',
+     image: '',
+     images: []
   });
 
   const fetchProducts = async () => {
@@ -32,10 +39,22 @@ export const AdminProducts: React.FC = () => {
   const handleOpenModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
-      setFormData(product);
+      setFormData({
+        ...product,
+        images: product.images || []
+      });
     } else {
       setEditingProduct(null);
-      setFormData({ name: '', price: 999, category: 'unisex', type: 'eyeglasses', shape: 'rectangle', description: '', image: 'https://picsum.photos/800/600' });
+      setFormData({
+        name: '',
+        price: 999,
+        category: 'unisex',
+        type: 'eyeglasses',
+        shape: 'rectangle',
+        description: '',
+        image: 'https://picsum.photos/800/600',
+        images: []
+      });
     }
     setIsModalOpen(true);
   };
@@ -85,6 +104,7 @@ export const AdminProducts: React.FC = () => {
         <table className="w-full text-left text-sm">
            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
               <tr>
+                 <th className="p-4 w-12 text-center">#</th>
                  <th className="p-4">Product</th>
                  <th className="p-4">Category</th>
                  <th className="p-4">Price</th>
@@ -94,14 +114,17 @@ export const AdminProducts: React.FC = () => {
            </thead>
            <tbody className="divide-y divide-slate-100">
               {loading ? (
-                 <tr><td colSpan={5} className="p-8 text-center text-slate-400">Loading inventory...</td></tr>
+                 <tr><td colSpan={6} className="p-8 text-center text-slate-400">Loading inventory...</td></tr>
               ) : filteredProducts.length === 0 ? (
-                 <tr><td colSpan={5} className="p-8 text-center text-slate-400">No products found.</td></tr>
+                 <tr><td colSpan={6} className="p-8 text-center text-slate-400">No products found.</td></tr>
               ) : (
-                 filteredProducts.map(p => (
+                 filteredProducts.map((p, index) => (
                     <tr key={p.id} className="hover:bg-slate-50 group">
+                       <td className="p-4 text-center text-slate-500 text-xs font-mono">
+                          {index + 1}
+                       </td>
                        <td className="p-4 flex items-center gap-3">
-                          <img src={p.image} className="w-10 h-10 rounded-md object-cover bg-slate-100" alt="" />
+                          <img src={(p.images && p.images[0]) || p.image} className="w-10 h-10 rounded-md object-cover bg-slate-100" alt="" />
                           <span className="font-bold text-slate-900">{p.name}</span>
                        </td>
                        <td className="p-4 capitalize text-slate-600">{p.category}</td>
@@ -168,13 +191,35 @@ export const AdminProducts: React.FC = () => {
                     </div>
                  </div>
                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Image URL</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Primary Image URL</label>
                     <div className="flex gap-2">
-                        <input required className="w-full p-2 border rounded-md" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
+                        <input
+                          required
+                          className="w-full p-2 border rounded-md"
+                          value={formData.image || ''}
+                          onChange={e => setFormData({...formData, image: e.target.value})}
+                        />
                         <div className="w-10 h-10 bg-slate-100 rounded border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
                            {formData.image ? <img src={formData.image} className="w-full h-full object-cover" /> : <ImageIcon className="w-5 h-5 text-slate-400" />}
                         </div>
                     </div>
+                 </div>
+                 <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Gallery Image URLs</label>
+                    <textarea
+                      className="w-full p-2 border rounded-md h-20 text-xs"
+                      value={(formData.images || []).join('\n')}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          images: e.target.value
+                            .split('\n')
+                            .map(url => url.trim())
+                            .filter(Boolean)
+                        })
+                      }
+                      placeholder="One image URL per line"
+                    />
                  </div>
                  <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Description</label>

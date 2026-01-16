@@ -104,7 +104,7 @@ const generateProducts = (count: number): Product[] => {
   return products;
 };
 
-export const PRODUCTS: Product[] = generateProducts(100);
+export const PRODUCTS: Product[] = [];
 
 export const LENS_OPTIONS: LensOption[] = [
   { id: 'frame_only', name: 'Frame Only', price: 0, description: 'No power. Just style.' },

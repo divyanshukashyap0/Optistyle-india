@@ -53,7 +53,7 @@ const drawFooter = (doc: any, pageWidth: number, pageHeight: number) => {
     doc.setFontSize(8);
     doc.setTextColor(COLORS.textLight[0], COLORS.textLight[1], COLORS.textLight[2]);
     doc.text(`Generated electronically by OptiStyle AI Engine on ${new Date().toLocaleString('en-IN')}`, 20, pageHeight - 8);
-    doc.text("Page 1 of 1", pageWidth - 20, pageHeight - 8, { align: "right" });
+    doc.text("                 ", pageWidth - 20, pageHeight - 8, { align: "right" });
 };
 
 // --- 1. EYE TEST CERTIFICATE ---
@@ -179,8 +179,15 @@ export const generateEyeTestCertificate = async (
 
     // --- QR CODE & VERIFICATION SECTION ---
     // @ts-ignore
-    const finalY = doc.lastAutoTable.finalY + 20;
-    
+    let finalY = doc.lastAutoTable.finalY + 20;
+    const requiredSpace = 70;
+    const bottomMargin = 25;
+    if (finalY + requiredSpace > pageHeight - bottomMargin) {
+        doc.addPage();
+        drawHeader(doc, pageWidth);
+        finalY = 60;
+    }
+
     // Verification Box
     doc.setDrawColor(COLORS.border[0], COLORS.border[1], COLORS.border[2]);
     doc.rect(20, finalY, pageWidth - 40, 50);
@@ -201,7 +208,7 @@ export const generateEyeTestCertificate = async (
     doc.setFont("times", "italic");
     doc.setFontSize(18);
     doc.setTextColor(COLORS.secondary[0], COLORS.secondary[1], COLORS.secondary[2]);
-    doc.text("OptiStyle Owners", 100, finalY + 25);
+    doc.text("OptiStyle Owners  ", 100, finalY + 25);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);

@@ -75,7 +75,7 @@ const drawFooter = (doc: any, pageWidth: number, pageHeight: number) => {
     doc.setFontSize(8);
     doc.setTextColor(COLORS.textLight[0], COLORS.textLight[1], COLORS.textLight[2]);
     doc.text(`Generated electronically by OptiStyle AI Engine on ${new Date().toLocaleString('en-IN')}`, 20, pageHeight - 8);
-    doc.text("Page 1 of 1", pageWidth - 20, pageHeight - 8, { align: "right" });
+    doc.text("                 ", pageWidth - 20, pageHeight - 8, { align: "right" });
 };
 
 // --- 1. EYE TEST CERTIFICATE ---

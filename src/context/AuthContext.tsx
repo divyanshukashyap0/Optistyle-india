@@ -42,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: fbUser.uid,
       name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
       email: fbUser.email || '',
+      photoURL: fbUser.photoURL || undefined,
       role,
       isAnonymous: fbUser.isAnonymous
     };
@@ -78,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     id: fbUser.uid,
                     name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
                     email: data.email || fbUser.email || '',
+                    photoURL: data.photoURL || fbUser.photoURL || undefined,
                     role,
                     isAnonymous: fbUser.isAnonymous
                   });
@@ -89,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     email: mapped.email,
                     name: mapped.name,
                     role: mapped.role,
+                    photoURL: mapped.photoURL || null,
                     createdAt: new Date().toISOString()
                   });
                 }
