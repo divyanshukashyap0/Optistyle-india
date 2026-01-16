@@ -274,18 +274,33 @@ export const generateInvoice = (
   doc.text(`${customer.city} - ${customer.zip}`, MARGIN, 85);
   doc.text(`Email: ${customer.email}`, MARGIN, 90);
 
+  const maxRows = 8;
+  const visibleItems = items.slice(0, maxRows);
+  const remainingCount = items.length - visibleItems.length;
+
+  const bodyRows = visibleItems.map(i => [
+    i.name,
+    i.selectedLens?.name || "Frame",
+    i.quantity,
+    `Rs. ${i.price}`,
+    `Rs. ${i.price * i.quantity}`,
+  ]);
+
+  if (remainingCount > 0) {
+    bodyRows.push([
+      `+ ${remainingCount} more item(s)`,
+      "",
+      "",
+      "",
+      "",
+    ]);
+  }
+
   (doc as any).autoTable({
     startY: 100,
-    pageBreak: "auto",
     margin: { left: 20, right: 20 },
     head: [["Item Name", "Type", "Qty", "Price", "Total"]],
-    body: items.map(i => [
-      i.name,
-      i.selectedLens?.name || "Frame",
-      i.quantity,
-      `Rs. ${i.price}`,
-      `Rs. ${i.price * i.quantity}`,
-    ]),
+    body: bodyRows,
     didDrawPage: () => drawHeader(doc, w),
     headStyles: { fillColor: COLORS.secondary },
   });
