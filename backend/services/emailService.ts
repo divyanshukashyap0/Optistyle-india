@@ -311,6 +311,8 @@ export const generateInvoice = (
 
 const emailConfig = ENV.EMAIL;
 
+const hasSendGridApiKey = !!emailConfig.SENDGRID_API_KEY;
+
 const hasSmtpConfig =
   !!emailConfig.SMTP_HOST &&
   !!emailConfig.SMTP_USER &&
@@ -348,6 +350,59 @@ const transporter = hasSmtpConfig
   : nodemailer.createTransport({
       jsonTransport: true,
     });
+
+const sendMail = async (mailOptions: { from: string; to: string; subject: string; html: string }) => {
+  if (hasSendGridApiKey && emailConfig.SENDGRID_API_KEY) {
+    const fromEmail = emailConfig.SENDER || 'optistyle.india@gmail.com';
+
+    const payload = {
+      personalizations: [
+        {
+          to: [{ email: mailOptions.to }],
+          subject: mailOptions.subject,
+        },
+      ],
+      from: {
+        email: fromEmail,
+        name: 'OptiStyle',
+      },
+      content: [
+        {
+          type: 'text/html',
+          value: mailOptions.html,
+        },
+      ],
+    };
+
+    try {
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${emailConfig.SENDGRID_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('SendGrid error:', response.status, errorText);
+      } else {
+        console.log(`Email sent via SendGrid to ${mailOptions.to}`);
+      }
+    } catch (error) {
+      console.error('Error sending email via SendGrid:', error);
+    }
+    return;
+  }
+
+  try {
+    await transporter.sendMail(mailOptions as any);
+    console.log(`Email sent via SMTP/OAuth to ${mailOptions.to}`);
+  } catch (error) {
+    console.error('Error sending email via SMTP/OAuth:', error);
+  }
+};
 
 export const sendOrderEmails = async (order: Order) => {
   if (!order.user.email) return;
@@ -469,11 +524,6 @@ export const sendOrderEmails = async (order: Order) => {
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${order.user.email}`);
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
+  await sendMail(mailOptions);
 };
 

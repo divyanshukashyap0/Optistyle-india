@@ -59,6 +59,7 @@ export const ENV = {
     SMTP_USER: getEnv('SMTP_USER', false),
     SMTP_PASS: getEnv('SMTP_PASS', false),
     SMTP_SECURE: getEnv('SMTP_SECURE', false, 'false'),
+    SENDGRID_API_KEY: getEnv('SENDGRID_API_KEY', false),
   },
 
   // External APIs
