@@ -46,7 +46,7 @@ export const ENV = {
     KEY_SECRET: getEnv('RAZORPAY_KEY_SECRET', true),
   },
 
-  // Email (OAuth)
+  // Email (SMTP / OAuth)
   EMAIL: {
     type: "OAuth2",
     CLIENT_ID: getEnv('GMAIL_CLIENT_ID', false),
@@ -54,6 +54,11 @@ export const ENV = {
     REFRESH_TOKEN: getEnv('GMAIL_REFRESH_TOKEN', false),
     SENDER: getEnv('GMAIL_SENDER', false),
     ADMIN: getEnv('ADMIN_EMAIL', false, 'optistyle.india@gmail.com'),
+    SMTP_HOST: getEnv('SMTP_HOST', false),
+    SMTP_PORT: getEnv('SMTP_PORT', false, '587'),
+    SMTP_USER: getEnv('SMTP_USER', false),
+    SMTP_PASS: getEnv('SMTP_PASS', false),
+    SMTP_SECURE: getEnv('SMTP_SECURE', false, 'false'),
   },
 
   // External APIs

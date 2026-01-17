@@ -310,13 +310,31 @@ export const generateInvoice = (
 };
 
 const emailConfig = ENV.EMAIL;
+
+const hasSmtpConfig =
+  !!emailConfig.SMTP_HOST &&
+  !!emailConfig.SMTP_USER &&
+  !!emailConfig.SMTP_PASS;
+
 const hasOAuthCredentials =
   !!emailConfig.CLIENT_ID &&
   !!emailConfig.CLIENT_SECRET &&
   !!emailConfig.REFRESH_TOKEN &&
   !!emailConfig.SENDER;
 
-const transporter = hasOAuthCredentials
+const transporter = hasSmtpConfig
+  ? nodemailer.createTransport({
+      host: emailConfig.SMTP_HOST,
+      port: Number(emailConfig.SMTP_PORT) || 587,
+      secure:
+        emailConfig.SMTP_SECURE === 'true' ||
+        emailConfig.SMTP_PORT === '465',
+      auth: {
+        user: emailConfig.SMTP_USER,
+        pass: emailConfig.SMTP_PASS,
+      },
+    })
+  : hasOAuthCredentials
   ? nodemailer.createTransport({
       service: 'gmail',
       auth: {
