@@ -177,7 +177,7 @@ export const Checkout: React.FC = () => {
                 </motion.div>
                 <h1 className="text-2xl font-bold text-slate-900 mb-2">Order Confirmed!</h1>
                 <p className="text-slate-500 mb-6">
-                    Thank you, {formData.firstName}.<br/> Your order <span className="font-mono font-bold text-slate-900">#{orderId}</span> has been placed.
+                    Thank you, {formData.firstName}.<br/> Your order <span className="font-mono font-bold text-slate-900">#{orderId}</span> has been placed, check your mail for order details , if not received check spam folder.
                 </p>
                 
                 {paymentMethod === 'COD' && (
