@@ -56,6 +56,7 @@ export const Footer: React.FC<FooterProps> = ({ isAdmin = false }) => {
             <ul className="space-y-4 text-sm">
               <li><FooterLink to="/orders">Track Order</FooterLink></li>
               <li><FooterLink to="/contact">Contact & Feedback</FooterLink></li>
+              <li><FooterLink to="/shipping-policy">Shipping Policy</FooterLink></li>
               <li><FooterLink to="/privacy-policy">Privacy Policy</FooterLink></li>
               <li><FooterLink to="/terms-conditions">Terms & Conditions</FooterLink></li>
               {isAdmin && <li><Link to="/admin" className="text-amber-600 font-bold text-xs bg-amber-50 px-2 py-1 rounded">Admin Panel</Link></li>}

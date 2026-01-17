@@ -20,6 +20,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { NotFound } from './pages/NotFound';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsConditions } from './pages/TermsConditions';
+import { ShippingPolicy } from './pages/ShippingPolicy';
 import { Contact } from './pages/Contact';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Footer } from './components/Footer';
@@ -53,9 +54,9 @@ const Layout: React.FC = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/contact" element={<Contact />} />
             
-            {/* Legal Pages */}
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-conditions" element={<TermsConditions />} />
+            <Route path="/shipping-policy" element={<ShippingPolicy />} />
             
             {/* Protected Routes */}
             <Route path="/profile" element={
