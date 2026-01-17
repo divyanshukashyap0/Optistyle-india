@@ -45,6 +45,10 @@ export const endpoints = {
   createOrder: '/create-order',
   generateCertificate: '/certificate',
   chat: '/chat',
+  email: {
+    welcome: '/email/welcome',
+    eyeTest: '/email/eye-test',
+  },
   admin: {
     stats: '/admin/stats',
     products: '/admin/products',

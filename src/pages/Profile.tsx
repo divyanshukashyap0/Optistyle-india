@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/Button';
 import { User as UserIcon, Package, LogOut, CreditCard, MapPin } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { Order } from '../types';
 import { SavedAddressList } from '../components/SavedAddressList';
@@ -12,6 +12,8 @@ export const Profile: React.FC = () => {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [showAccountDetails, setShowAccountDetails] = useState(false);
+  const location = useLocation();
+  const fromSignup = (location.state as any)?.fromSignup;
 
   useEffect(() => {
     api
@@ -32,12 +34,24 @@ export const Profile: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-serif font-bold">My Account</h1>
         <Button variant="outline" onClick={logout} className="flex gap-2">
           <LogOut className="w-4 h-4" /> Sign Out
         </Button>
       </div>
+
+      {fromSignup && (
+        <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-slate-700">
+          <p className="font-semibold text-slate-900">Welcome to OptiStyle!</p>
+          <p className="mt-1">
+            We&apos;ve emailed you a welcome message. If you don&apos;t see it in your inbox,
+            please check your Spam or Promotions folder and mark it as <span className="font-semibold">Not spam</span>.
+            Adding <span className="font-mono text-xs align-middle">optistyle.india@gmail.com</span> to your contacts
+            helps you never miss order updates.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200">

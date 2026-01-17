@@ -4,6 +4,7 @@ import { Button } from '../components/Button';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { PageTransition } from '../components/PageTransition';
+import { api, endpoints } from '../services/api';
 
 export const Register: React.FC = () => {
   const { register, isLoading, error } = useAuth();
@@ -14,7 +15,15 @@ export const Register: React.FC = () => {
     e.preventDefault();
     try {
       await register(form.email, form.password, form.name);
-      navigate('/profile');
+      try {
+        await api.post(endpoints.email.welcome, {
+          name: form.name,
+          email: form.email,
+        });
+      } catch (err) {
+        console.error('Welcome email failed', err);
+      }
+      navigate('/profile', { state: { fromSignup: true } });
     } catch (e) {
       // Handled by context
     }

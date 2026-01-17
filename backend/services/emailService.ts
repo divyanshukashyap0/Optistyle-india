@@ -527,3 +527,174 @@ export const sendOrderEmails = async (order: Order) => {
   await sendMail(mailOptions);
 };
 
+export const sendWelcomeEmail = async (name: string, email: string) => {
+  if (!email) return;
+
+  const textColor = '#0f172a';
+  const mutedText = '#64748b';
+  const accentColor = '#2563EB';
+
+  const safeName = name && name.trim().length > 0 ? name.trim() : 'there';
+
+  const html = `
+    <div style="background:#f8fafc;padding:24px 0;">
+      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:8px;border:1px solid #e2e8f0;font-family:Arial,Helvetica,sans-serif;color:${textColor};">
+        <div style="padding:18px 20px;border-bottom:2px solid ${accentColor};display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:22px;font-weight:bold;letter-spacing:0.03em;">OptiStyle</div>
+          <div style="font-size:11px;color:${mutedText};text-align:right;line-height:1.4;">
+            <div>Welcome to OptiStyle</div>
+            <div>${new Date().toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+
+        <div style="padding:20px 22px 10px 22px;font-size:14px;line-height:1.7;">
+          <p style="margin:0 0 10px 0;">Hi <strong>${safeName}</strong>,</p>
+          <p style="margin:0 0 10px 0;color:${mutedText};">
+            Thank you for creating your account with <strong>OptiStyle</strong>. You can now:
+          </p>
+          <ul style="margin:0 0 12px 20px;padding:0;color:${mutedText};font-size:13px;">
+            <li>Track your orders and download invoices.</li>
+            <li>Save delivery addresses for faster checkout.</li>
+            <li>Access your AI-powered eye test reports anytime.</li>
+          </ul>
+          <p style="margin:0 0 10px 0;color:${mutedText};">
+            We are excited to help you find eyewear that fits your style and comfort.
+          </p>
+        </div>
+
+        <div style="padding:14px 22px 18px 22px;font-size:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;color:${mutedText};">
+          <div>
+            Customer Support: <span style="color:${accentColor};">optistyle.india@gmail.com</span><br/>
+            Customer Hotline: +91-80053 43226
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:bold;color:${textColor};margin-bottom:4px;">OptiStyle</div>
+            <div>Eyewear • Eye Care • Everyday Comfort</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const fromEmail = emailConfig.SENDER || 'optistyle.india@gmail.com';
+
+  await sendMail({
+    from: `"OptiStyle" <${fromEmail}>`,
+    to: email,
+    subject: 'Welcome to OptiStyle',
+    html,
+  });
+};
+
+interface EyeTestEmailPayload {
+  name: string;
+  email: string;
+  age: string;
+  gender: string;
+  certId: string;
+  leftEye: VisionEstimation;
+  rightEye: VisionEstimation;
+  overallConfidence: number;
+}
+
+export const sendEyeTestCertificateEmail = async (payload: EyeTestEmailPayload) => {
+  if (!payload.email) return;
+
+  const textColor = '#0f172a';
+  const mutedText = '#64748b';
+  const accentColor = '#2563EB';
+
+  const left = payload.leftEye;
+  const right = payload.rightEye;
+
+  const html = `
+    <div style="background:#0f172a;padding:30px 0;">
+      <div style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;font-family:Arial,Helvetica,sans-serif;overflow:hidden;">
+        <div style="padding:18px 22px;border-bottom:2px solid ${accentColor};display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0f172a,#020617);color:#e5e7eb;">
+          <div>
+            <div style="font-size:22px;font-weight:bold;letter-spacing:0.06em;">OPTISTYLE</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:2px;">VISION SCREENING REPORT</div>
+          </div>
+          <div style="text-align:right;font-size:11px;">
+            <div style="color:#cbd5f5;font-weight:600;">Certificate ID</div>
+            <div style="font-weight:bold;color:white;">${payload.certId}</div>
+            <div style="color:#9ca3af;margin-top:4px;">Generated on ${new Date().toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+
+        <div style="padding:20px 22px 12px 22px;">
+          <h2 style="margin:0 0 6px 0;font-size:18px;color:${textColor};">Patient Details</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:${mutedText};margin-top:8px;">
+            <div><strong>Name:</strong> ${payload.name}</div>
+            <div><strong>Age / Gender:</strong> ${payload.age || 'N/A'} / ${payload.gender}</div>
+            <div><strong>Email:</strong> ${payload.email}</div>
+            <div><strong>AI Confidence:</strong> ${payload.overallConfidence}%</div>
+          </div>
+        </div>
+
+        <div style="padding:8px 22px 18px 22px;">
+          <h2 style="margin:0 0 10px 0;font-size:16px;color:${textColor};">Estimated Refraction Summary</h2>
+          <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:13px;border:1px solid #e2e8f0;">
+            <thead>
+              <tr style="background:#0f172a;color:white;">
+                <th align="left" style="padding:8px 10px;border-right:1px solid #1e293b;">Eye</th>
+                <th align="center" style="padding:8px 10px;border-right:1px solid #1e293b;">Visual Acuity</th>
+                <th align="center" style="padding:8px 10px;border-right:1px solid #1e293b;">Sphere (SPH)</th>
+                <th align="center" style="padding:8px 10px;border-right:1px solid #1e293b;">Cylinder (CYL)</th>
+                <th align="center" style="padding:8px 10px;">Axis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#f9fafb;">
+                <td style="padding:8px 10px;border-top:1px solid #e2e8f0;">Right Eye (OD)</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${right.acuity}</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${right.sph}</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${right.cyl}</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${right.axis}</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 10px;border-top:1px solid #e2e8f0;">Left Eye (OS)</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${left.acuity}</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${left.sph}</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${left.cyl}</td>
+                <td align="center" style="padding:8px 10px;border-top:1px solid #e2e8f0;">${left.axis}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="padding:14px 22px 18px 22px;font-size:12px;color:${mutedText};border-top:1px solid #e2e8f0;">
+          <p style="margin:0 0 6px 0;font-weight:bold;color:${textColor};">Important medical disclaimer</p>
+          <p style="margin:0 0 4px 0;">
+            This is an AI-assisted vision screening report and is not a medical prescription.
+          </p>
+          <p style="margin:0 0 4px 0;">
+            For any change in glasses or if you experience discomfort, pain, redness, or sudden vision loss,
+            please visit a qualified eye care professional for a full clinical examination.
+          </p>
+        </div>
+
+        <div style="padding:12px 22px 16px 22px;font-size:11px;color:${mutedText};display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            Customer Support: <span style="color:${accentColor};">optistyle.india@gmail.com</span><br/>
+            Customer Hotline: +91-80053 43226
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:bold;color:${textColor};margin-bottom:4px;">OptiStyle</div>
+            <div>Eyewear • Eye Care • Everyday Comfort</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const fromEmail = emailConfig.SENDER || 'optistyle.india@gmail.com';
+
+  await sendMail({
+    from: `"OptiStyle" <${fromEmail}>`,
+    to: payload.email,
+    subject: `Your OptiStyle Vision Screening Report – ${payload.certId}`,
+    html,
+  });
+};
+

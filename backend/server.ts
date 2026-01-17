@@ -10,6 +10,7 @@ import paymentRoutes from './routes/payment.routes.ts';
 import adminRoutes from './routes/admin.routes.ts';
 import addressRoutes from './routes/address.routes.ts';
 import orderRoutes from './routes/order.routes.ts';
+import emailRoutes from './routes/email.routes.ts';
 import './config/firebase.ts'; 
 import { ENV } from './config/env.ts';
 import { getAllProducts, getAllOrders, getSystemSettings } from './services/db.ts';
@@ -26,6 +27,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/email', emailRoutes);
 
 // Public Routes
 app.get('/api/products', async (req, res) => {

@@ -37,7 +37,7 @@ export const EyeTest: React.FC = () => {
   
   // Navigation & Config
   const [step, setStep] = useState<ClinicalStep>('intro');
-  const [voiceEnabled, setVoiceEnabled] = useState(false); // Default off for clinical calm
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sliderValue, setSliderValue] = useState(50);
   const startTime = useRef(Date.now());
@@ -71,6 +71,7 @@ export const EyeTest: React.FC = () => {
 
 
   const [aiExplanation, setAiExplanation] = useState<string>('');
+  const [showEmailHint, setShowEmailHint] = useState(false);
 
   // --- PROGRESS CALC ---
   const getProgress = () => {
@@ -127,6 +128,12 @@ export const EyeTest: React.FC = () => {
     }
   }, [step, runAnalysis]);
 
+  useEffect(() => {
+    if (!showEmailHint) return;
+    const timer = setTimeout(() => setShowEmailHint(false), 10000);
+    return () => clearTimeout(timer);
+  }, [showEmailHint]);
+
   const downloadReport = async () => {
     setIsGenerating(true);
     const leftEst = calculateEstimation({ eye: 'left', acuityScore: profile.leftScore, astigmatismDetected: profile.astigmatism, colorVisionScore: 1 });
@@ -151,6 +158,23 @@ export const EyeTest: React.FC = () => {
           }
       );
 
+      if (user?.email) {
+        try {
+          await api.post(endpoints.email.eyeTest, {
+            name: profile.name || user.name || 'Patient',
+            email: user.email,
+            age: profile.age,
+            gender: profile.gender,
+            certId,
+            leftEye: leftEst,
+            rightEye: rightEst,
+            overallConfidence: 88,
+          });
+          setShowEmailHint(true);
+        } catch (e) {
+          console.error('Eye test email failed', e);
+        }
+      }
     } catch (error) {
       console.error("PDF generation failed:", error);
       alert("Could not generate certificate. Please try again.");
@@ -577,6 +601,15 @@ export const EyeTest: React.FC = () => {
                         <p className="text-center text-xs text-slate-400 max-w-xs mx-auto">
                             *This report is for informational purposes only. Please visit an optometrist for a dilated eye exam.
                         </p>
+                        {showEmailHint && (
+                          <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5" />
+                            <div>
+                              <p className="font-semibold">Check your email</p>
+                              <p>If you do not see your eye test report, check Spam/Promotions and mark it as &quot;Not spam&quot;.</p>
+                            </div>
+                          </div>
+                        )}
                     </div>
                 </div>
             )}
