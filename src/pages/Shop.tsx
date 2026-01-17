@@ -1,180 +1,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { PageTransition, staggerContainer, staggerItem } from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../components/Skeleton';
 import { Product } from '../types';
 import { api, endpoints } from '../services/api';
-
-const FiltersPanel = ({
-  selectedCategory,
-  setSelectedCategory,
-  selectedShape,
-  setSelectedShape,
-  priceRange,
-  setPriceRange,
-}: {
-  selectedCategory: string;
-  setSelectedCategory: (value: string) => void;
-  selectedShape: string;
-  setSelectedShape: (value: string) => void;
-  priceRange: [number, number];
-  setPriceRange: (value: [number, number]) => void;
-}) => {
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-2 text-lg font-bold font-serif mb-2">
-        <Filter className="w-5 h-5" /> Filters
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-3">Category</h3>
-        <div className="space-y-2">
-          {['all', 'men', 'women', 'unisex', 'sunglasses'].map(cat => (
-            <label key={cat} className="flex items-center gap-2 cursor-pointer group">
-              <div className="relative flex items-center">
-                <input
-                  type="radio"
-                  name="category"
-                  checked={selectedCategory === cat}
-                  onChange={() => setSelectedCategory(cat)}
-                  className="peer h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-              </div>
-              <span
-                className={`capitalize transition-colors ${
-                  selectedCategory === cat
-                    ? 'text-brand-600 font-medium'
-                    : 'text-slate-600 group-hover:text-slate-900'
-                }`}
-              >
-                {cat}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-3">Frame Shape</h3>
-        <div className="flex flex-wrap gap-2">
-          {['all', 'round', 'square', 'aviator', 'cat-eye', 'rectangle'].map(shape => (
-            <motion.button
-              key={shape}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedShape(shape)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                selectedShape === shape
-                  ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600'
-              }`}
-            >
-              {shape.replace('-', ' ')}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-3">Price Range</h3>
-        <div className="space-y-2 text-sm">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange[0] === 0 && priceRange[1] === Infinity}
-              onChange={() => setPriceRange([0, Infinity])}
-              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-            />
-            <span
-              className={
-                priceRange[0] === 0 && priceRange[1] === Infinity
-                  ? 'text-brand-600 font-medium'
-                  : 'text-slate-600 group-hover:text-slate-900'
-              }
-            >
-              All prices
-            </span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange[0] === 0 && priceRange[1] === 999}
-              onChange={() => setPriceRange([0, 999])}
-              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-            />
-            <span
-              className={
-                priceRange[0] === 0 && priceRange[1] === 999
-                  ? 'text-brand-600 font-medium'
-                  : 'text-slate-600 group-hover:text-slate-900'
-              }
-            >
-              Under ₹1000
-            </span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange[0] === 1000 && priceRange[1] === 1999}
-              onChange={() => setPriceRange([1000, 1999])}
-              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-            />
-            <span
-              className={
-                priceRange[0] === 1000 && priceRange[1] === 1999
-                  ? 'text-brand-600 font-medium'
-                  : 'text-slate-600 group-hover:text-slate-900'
-              }
-            >
-              ₹1000 – ₹1999
-            </span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange[0] === 2000 && priceRange[1] === 2999}
-              onChange={() => setPriceRange([2000, 2999])}
-              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-            />
-            <span
-              className={
-                priceRange[0] === 2000 && priceRange[1] === 2999
-                  ? 'text-brand-600 font-medium'
-                  : 'text-slate-600 group-hover:text-slate-900'
-              }
-            >
-              ₹2000 – ₹2999
-            </span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="radio"
-              name="price"
-              checked={priceRange[0] === 3000 && priceRange[1] === Infinity}
-              onChange={() => setPriceRange([3000, Infinity])}
-              className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-            />
-            <span
-              className={
-                priceRange[0] === 3000 && priceRange[1] === Infinity
-                  ? 'text-brand-600 font-medium'
-                  : 'text-slate-600 group-hover:text-slate-900'
-              }
-            >
-              ₹3000 and above
-            </span>
-          </label>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export const Shop: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -186,7 +18,7 @@ export const Shop: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [sortOption, setSortOption] = useState<'featured' | 'priceAsc' | 'priceDesc'>('featured');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -235,26 +67,24 @@ export const Shop: React.FC = () => {
     return base;
   }, [products, selectedCategory, priceRange, selectedShape, sortOption]);
 
+  const compareProducts = useMemo(
+    () => products.filter(p => compareIds.includes(p.id)),
+    [products, compareIds]
+  );
+
+  const toggleCompare = (id: string) => {
+    setCompareIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(pid => pid !== id);
+      }
+      const updated = [id, ...prev];
+      return updated.slice(0, 4);
+    });
+  };
+
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col md:flex-row gap-12">
-        
-        {/* Sidebar Filters */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="hidden md:block md:w-64 space-y-8 sticky top-24 h-fit"
-        >
-          <FiltersPanel
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            selectedShape={selectedShape}
-            setSelectedShape={setSelectedShape}
-            priceRange={priceRange}
-            setPriceRange={setPriceRange}
-          />
-        </motion.div>
 
         {/* Product Grid */}
         <div className="flex-1">
@@ -267,14 +97,6 @@ export const Shop: React.FC = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(true)}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-sm md:hidden"
-              >
-                <Filter className="w-4 h-4" />
-                Filters
-              </button>
               <SlidersHorizontal className="w-4 h-4 text-slate-500" />
               <select
                 className="bg-transparent text-sm border-none focus:ring-0 text-slate-700 font-medium cursor-pointer"
@@ -339,6 +161,16 @@ export const Shop: React.FC = () => {
                           <div className="flex items-center gap-2 mt-auto">
                              <span className="text-brand-900 font-semibold">₹{product.price}</span>
                           </div>
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.preventDefault();
+                              toggleCompare(product.id);
+                            }}
+                            className="mt-2 text-[11px] font-medium text-slate-500 hover:text-brand-600 self-start"
+                          >
+                            {compareIds.includes(product.id) ? 'Remove from compare' : 'Add to compare'}
+                          </button>
                         </div>
                       </div>
                     </Link>
@@ -357,57 +189,79 @@ export const Shop: React.FC = () => {
               <p className="text-slate-500">
                 {products.length === 0 ? 'No products available yet. Please check back soon.' : 'No products match your filters.'}
               </p>
-              <button 
-                onClick={() => { setSelectedCategory('all'); setSelectedShape('all'); setPriceRange([0, Infinity]); }}
-                className="text-brand-600 font-medium mt-2 hover:underline"
-              >
-                Clear Filters
-              </button>
             </motion.div>
+          )}
+
+          {compareProducts.length >= 2 && (
+            <div className="mt-12 border-t border-slate-200 pt-8">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">
+                Compare selected frames
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm text-slate-700">
+                  <thead>
+                    <tr>
+                      <th className="p-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                        Feature
+                      </th>
+                      {compareProducts.map(p => (
+                        <th
+                          key={p.id}
+                          className="p-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide"
+                        >
+                          {p.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-slate-100">
+                      <td className="p-3 text-xs font-semibold text-slate-500">
+                        Price
+                      </td>
+                      {compareProducts.map(p => (
+                        <td key={p.id} className="p-3">
+                          ₹{p.price}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-t border-slate-100">
+                      <td className="p-3 text-xs font-semibold text-slate-500">
+                        Frame shape
+                      </td>
+                      {compareProducts.map(p => (
+                        <td key={p.id} className="p-3 capitalize">
+                          {p.shape}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-t border-slate-100">
+                      <td className="p-3 text-xs font-semibold text-slate-500">
+                        Type
+                      </td>
+                      {compareProducts.map(p => (
+                        <td key={p.id} className="p-3 capitalize">
+                          {p.type}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-t border-slate-100">
+                      <td className="p-3 text-xs font-semibold text-slate-500">
+                        Rating
+                      </td>
+                      {compareProducts.map(p => (
+                        <td key={p.id} className="p-3">
+                          {p.rating.toFixed(1)} ★
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       </div>
-
-      <AnimatePresence>
-        {isFilterOpen && (
-          <motion.div
-            key="mobile-filters"
-            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsFilterOpen(false)}
-          >
-            <motion.div
-              className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 260, damping: 25 }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-sm font-medium text-slate-900">Filters</div>
-                <button
-                  type="button"
-                  onClick={() => setIsFilterOpen(false)}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-900"
-                >
-                  Close
-                </button>
-              </div>
-              <FiltersPanel
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                selectedShape={selectedShape}
-                setSelectedShape={setSelectedShape}
-                priceRange={priceRange}
-                setPriceRange={setPriceRange}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </PageTransition>
   );
 };

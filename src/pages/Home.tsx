@@ -13,6 +13,8 @@ export const Home: React.FC = () => {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
   const [refreshingTrending, setRefreshingTrending] = useState(false);
+  const [recentProducts, setRecentProducts] = useState<Product[]>([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
 
   useEffect(() => {
     const fetchTrending = async (silent: boolean) => {
@@ -35,6 +37,45 @@ export const Home: React.FC = () => {
     };
 
     fetchTrending(false);
+  }, []);
+
+  useEffect(() => {
+    const key = 'optistyle_recent_products';
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      if (!saved) {
+        setRecentProducts([]);
+        setLoadingRecent(false);
+        return;
+      }
+      const ids = JSON.parse(saved) as string[] | null;
+      if (!ids || ids.length === 0) {
+        setRecentProducts([]);
+        setLoadingRecent(false);
+        return;
+      }
+
+      const fetchRecent = async () => {
+        try {
+          const response = await api.get(endpoints.products);
+          const products = (response.data as Product[]) || [];
+          const map = new Map(products.map(p => [p.id, p]));
+          const ordered = ids
+            .map(id => map.get(id))
+            .filter((p): p is Product => Boolean(p));
+          setRecentProducts(ordered);
+        } catch (error) {
+          setRecentProducts([]);
+        } finally {
+          setLoadingRecent(false);
+        }
+      };
+
+      fetchRecent();
+    } catch {
+      setRecentProducts([]);
+      setLoadingRecent(false);
+    }
   }, []);
 
   const handleRefreshTrending = () => {
@@ -294,6 +335,124 @@ export const Home: React.FC = () => {
               ))
             )}
           </motion.div>
+        </div>
+      </section>
+
+      {recentProducts.length > 0 && !loadingRecent && (
+        <section className="py-24 bg-white border-t border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-end mb-12">
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900 mb-2 font-heading">
+                  Recently viewed
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Pick up where you left off. Frames you recently explored.
+                </p>
+              </div>
+              <Link
+                to="/shop"
+                className="text-brand-600 font-bold text-sm hover:text-brand-800 flex items-center group transition-colors"
+              >
+                Continue shopping
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-50px' }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            >
+              {recentProducts.map(product => (
+                <motion.div variants={staggerItem} key={product.id}>
+                  <Link to={`/product/${product.id}`} className="group block h-full">
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-200 h-full flex flex-col group-hover:-translate-y-1">
+                      <div className="aspect-[5/4] bg-slate-100 relative overflow-hidden">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                      </div>
+                      <div className="p-5 flex-1 flex flex-col">
+                        <h3 className="text-sm font-bold text-slate-900 font-heading mb-1 group-hover:text-brand-600 transition-colors">
+                          {product.name}
+                        </h3>
+                        <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-4">
+                          {product.shape} · {product.category}
+                        </p>
+                        <span className="mt-auto text-base font-bold text-slate-900">
+                          ₹{product.price}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      <section className="py-24 bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-3 font-heading">
+                From the OptiStyle blog
+              </h2>
+              <p className="text-slate-300 text-sm max-w-2xl">
+                Practical tips on choosing frames, caring for your lenses, and keeping your eyes healthy in a digital-first world.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                id: 'blog_1',
+                tag: 'Frame styling',
+                title: 'How to choose eyeglass frames that match your face shape',
+                excerpt:
+                  'Round, square or heart-shaped face? Learn simple rules to pick frames that balance your features and feel comfortable all day.',
+              },
+              {
+                id: 'blog_2',
+                tag: 'Lens guide',
+                title: 'Blue cut vs anti-glare vs photochromic: which lens is right for you?',
+                excerpt:
+                  'Understand the difference between popular lens upgrades so you invest in the protection that actually fits your lifestyle.',
+              },
+              {
+                id: 'blog_3',
+                tag: 'Eye health',
+                title: 'Screen time, headaches and dry eyes: small changes that make a big difference',
+                excerpt:
+                  'Simple, science-backed habits to reduce digital eye strain when you work or study on laptops and mobiles all day.',
+              },
+            ].map(post => (
+              <article
+                key={post.id}
+                className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 flex flex-col h-full"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-sky-300 mb-2">
+                  {post.tag}
+                </p>
+                <h3 className="text-lg font-bold text-white mb-3">
+                  {post.title}
+                </h3>
+                <p className="text-sm text-slate-300 flex-1">
+                  {post.excerpt}
+                </p>
+                <span className="mt-4 inline-flex items-center text-xs font-semibold text-sky-300">
+                  Coming soon on OptiStyle Journal
+                </span>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </PageTransition>

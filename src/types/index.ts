@@ -39,6 +39,9 @@ export interface User {
   isDisabled?: boolean;
   lastLogin?: string;
   isAnonymous?: boolean;
+  age?: string;
+  gender?: string;
+  dob?: string;
 }
 
 export interface Address {

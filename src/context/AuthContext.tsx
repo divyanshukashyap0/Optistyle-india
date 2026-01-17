@@ -81,7 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     email: data.email || fbUser.email || '',
                     photoURL: data.photoURL || fbUser.photoURL || undefined,
                     role,
-                    isAnonymous: fbUser.isAnonymous
+                    isAnonymous: fbUser.isAnonymous,
+                    age: data.age,
+                    gender: data.gender,
+                    dob: data.dob
                   });
                 } else {
                   const mapped = mapUser(fbUser);

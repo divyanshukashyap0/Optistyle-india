@@ -533,6 +533,20 @@ export const Checkout: React.FC = () => {
                                 couponCode={appliedCoupon?.code}
                                 deliveryInfo={deliveryInfo}
                             />
+                            <div className="p-4 border-t border-slate-100 space-y-3 bg-slate-50">
+                                <div className="flex items-center gap-3 text-xs text-slate-500">
+                                    <ShieldCheck className="w-4 h-4 text-green-600 shrink-0" />
+                                    <p>Payments are 100% encrypted and secured by Razorpay.</p>
+                                </div>
+                                <Button 
+                                    form="checkout-form"
+                                    type="submit" 
+                                    className="w-full py-3 text-sm font-semibold shadow-lg shadow-brand-200"
+                                    loading={loading}
+                                >
+                                    {loading ? 'Processing Order...' : `Pay ₹${payableTotal}`}
+                                </Button>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -561,52 +575,25 @@ export const Checkout: React.FC = () => {
                       couponCode={appliedCoupon?.code}
                       deliveryInfo={deliveryInfo}
                     />
-                 </div>
-                 
-                 <div className="mt-6 space-y-3">
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <div className="p-4 border-t border-slate-100 space-y-3 bg-slate-50">
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
                         <ShieldCheck className="w-4 h-4 text-green-600 shrink-0" />
                         <p>Payments are 100% encrypted and secured by Razorpay.</p>
+                      </div>
+                      <Button 
+                        form="checkout-form"
+                        type="submit" 
+                        className="w-full py-3 text-sm font-semibold shadow-lg shadow-brand-200"
+                        loading={loading}
+                      >
+                        {loading ? 'Processing Order...' : `Pay ₹${payableTotal}`}
+                      </Button>
                     </div>
                  </div>
              </div>
           </div>
 
         </div>
-      </div>
-
-         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] md:hidden z-40">
-         <div className="flex gap-4 items-center">
-             <div className="flex-1">
-                 <p className="text-xs text-slate-500 uppercase font-bold">Total Payable</p>
-                <p className="text-xl font-bold text-slate-900">₹{payableTotal}</p>
-             </div>
-             <Button 
-                onClick={() => {
-                    const form = document.getElementById('checkout-form') as HTMLFormElement;
-                    if(form) form.requestSubmit();
-                }}
-                className="flex-1 py-3 text-base shadow-lg shadow-brand-200"
-                loading={loading}
-             >
-                {loading ? 'Processing' : `Pay ₹${payableTotal}`}
-             </Button>
-         </div>
-      </div>
-
-      <div className="hidden md:block fixed bottom-0 left-0 right-0 lg:static">
-             <div className="max-w-7xl mx-auto px-4 relative">
-             <div className="absolute bottom-10 right-[420px] w-64 hidden lg:block">
-                 <Button 
-                    form="checkout-form"
-                    type="submit" 
-                    className="w-full py-4 text-lg shadow-xl shadow-brand-200 transform transition-transform hover:-translate-y-1"
-                    loading={loading}
-                 >
-                    {loading ? 'Processing Order...' : `Pay ₹${payableTotal}`}
-                 </Button>
-             </div>
-          </div>
       </div>
 
     </div>

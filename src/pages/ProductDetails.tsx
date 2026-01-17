@@ -59,7 +59,46 @@ export const ProductDetails: React.FC = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!product) return;
+    try {
+      const key = 'optistyle_recent_products';
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      const existing = saved ? (JSON.parse(saved) as string[]) : [];
+      const filtered = existing.filter(pid => pid !== product.id);
+      const updated = [product.id, ...filtered].slice(0, 6);
+      localStorage.setItem(key, JSON.stringify(updated));
+    } catch {
+    }
+  }, [product]);
+
   if (!loading && !product) return <div>Product not found</div>;
+
+  const reviews: { id: string; name: string; rating: number; comment: string; tag?: string }[] = product
+    ? [
+        {
+          id: 'r1',
+          name: 'Verified Customer',
+          rating: Math.round(product.rating),
+          comment: 'Lightweight frame and very comfortable for all-day wear.',
+          tag: 'Comfort & Fit',
+        },
+        {
+          id: 'r2',
+          name: 'Office User',
+          rating: Math.max(4, Math.round(product.rating - 0.2)),
+          comment: 'Looks premium in person and the lenses are crystal clear.',
+          tag: 'Build Quality',
+        },
+        {
+          id: 'r3',
+          name: 'Online Shopper',
+          rating: Math.max(4, Math.round(product.rating - 0.4)),
+          comment: 'Perfect size for my face, same as shown in the photos.',
+          tag: 'Style & Size',
+        },
+      ]
+    : [];
 
   const handleAddToCart = () => {
     if (product) addToCart(product, selectedLens);
@@ -164,8 +203,45 @@ export const ProductDetails: React.FC = () => {
                 <span className="text-slate-400 text-sm">(120 reviews)</span>
               </div>
               <h1 className="text-4xl font-serif font-bold text-slate-900 mb-2">{product!.name}</h1>
-              <p className="text-xl text-slate-500 mb-4">₹{product!.price}</p>
-              <p className="text-slate-600 leading-relaxed">{product!.description}</p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-xl font-bold text-slate-900">
+                  ₹{product!.price + selectedLens.price}
+                </p>
+                <Button size="md" className="px-8" onClick={handleAddToCart}>
+                  Add to Bag
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Includes frame and selected lenses.
+              </p>
+              <p className="text-slate-600 leading-relaxed mt-4">{product!.description}</p>
+            </div>
+          )}
+
+          {!loading && product && (
+            <div className="mb-10">
+              <div className="bg-slate-50 rounded-xl p-4 border border-dashed border-slate-200">
+                <h3 className="font-bold text-slate-900 mb-2 text-sm">
+                  Frame size guide
+                </h3>
+                <p className="text-xs text-slate-500 mb-3">
+                  Most faces fit a medium size. Use these numbers on your existing frame as a reference.
+                </p>
+                <div className="grid grid-cols-3 gap-3 text-center text-[11px] text-slate-600">
+                  <div>
+                    <p className="font-semibold text-slate-900">Lens width</p>
+                    <p className="mt-1">48–52 mm</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Bridge</p>
+                    <p className="mt-1">16–20 mm</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Temple</p>
+                    <p className="mt-1">135–145 mm</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -233,36 +309,61 @@ export const ProductDetails: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-between border-t border-slate-200 pt-6 mt-6">
+          <div className="border-t border-slate-200 pt-6 mt-6">
              {loading ? (
-               <>
-                 <div>
-                    <Skeleton className="h-4 w-20 mb-2" />
-                    <Skeleton className="h-10 w-32" />
-                 </div>
-                 <Skeleton className="h-14 w-40 rounded-xl" />
-               </>
+               <div>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-40" />
+               </div>
              ) : (
-               <>
-                 <div>
-                    <p className="text-sm text-slate-500">Total Price</p>
-                    <motion.p 
-                      key={product!.price + selectedLens.price}
-                      initial={{ scale: 1.2, color: '#2563EB' }}
-                      animate={{ scale: 1, color: '#0F172A' }}
-                      className="text-3xl font-bold text-brand-900"
-                    >
-                       ₹{product!.price + selectedLens.price}
-                    </motion.p>
-                 </div>
-                 <Button size="lg" className="px-12" onClick={handleAddToCart}>
-                   Add to Bag
-                 </Button>
-               </>
+               <div>
+                  <p className="text-sm text-slate-500 mb-1">Total with selected lenses</p>
+                  <motion.p 
+                    key={product!.price + selectedLens.price}
+                    initial={{ scale: 1.05, color: '#2563EB' }}
+                    animate={{ scale: 1, color: '#0F172A' }}
+                    className="text-2xl font-bold text-brand-900"
+                  >
+                     ₹{product!.price + selectedLens.price}
+                  </motion.p>
+               </div>
              )}
           </div>
         </motion.div>
       </div>
+
+      {!loading && product && reviews.length > 0 && (
+        <section className="mt-16 border-t border-slate-200 pt-10">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+            <span>Customer reviews</span>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {reviews.map(review => (
+              <div
+                key={review.id}
+                className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {review.name}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                    <span>{review.rating.toFixed(1)}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600">{review.comment}</p>
+                {review.tag && (
+                  <p className="mt-2 inline-flex px-2 py-0.5 rounded-full bg-brand-50 text-[11px] font-medium text-brand-700">
+                    {review.tag}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </PageTransition>
   );
 };

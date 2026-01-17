@@ -6,12 +6,23 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { Order } from '../types';
 import { SavedAddressList } from '../components/SavedAddressList';
+import { db } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 export const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [showAccountDetails, setShowAccountDetails] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    age: user?.age || '',
+    gender: user?.gender || '',
+    dob: user?.dob || ''
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const location = useLocation();
   const fromSignup = (location.state as any)?.fromSignup;
 
@@ -31,6 +42,35 @@ export const Profile: React.FC = () => {
   }, []);
 
   if (!user) return <Navigate to="/login" />;
+
+  const handleProfileChange = (field: 'age' | 'gender' | 'dob', value: string) => {
+    setProfileForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleProfileSave = async () => {
+    if (!user) return;
+    if (!db) {
+      setProfileError('Profile update is not available right now.');
+      return;
+    }
+    setSavingProfile(true);
+    setProfileError(null);
+    setProfileMessage(null);
+    try {
+      const ref = doc(db, 'users', user.id);
+      await updateDoc(ref, {
+        age: profileForm.age || null,
+        gender: profileForm.gender || null,
+        dob: profileForm.dob || null
+      });
+      setProfileMessage('Account details updated.');
+      setEditingProfile(false);
+    } catch (e) {
+      setProfileError('Could not update account details. Please try again.');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -114,19 +154,123 @@ export const Profile: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="border border-dashed border-slate-200 rounded-xl p-4 flex flex-col justify-between bg-slate-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="w-5 h-5 text-brand-600" />
-                    <div className="font-semibold text-slate-800 text-sm uppercase tracking-wide">
-                      Payment methods
+                <div className="space-y-4">
+                  <div className="border border-slate-200 rounded-xl p-4 bg-white">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="w-5 h-5 text-brand-600" />
+                        <div className="font-semibold text-slate-800 text-sm uppercase tracking-wide">
+                          Profile info
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (editingProfile) {
+                            setProfileForm({
+                              age: user.age || '',
+                              gender: user.gender || '',
+                              dob: user.dob || ''
+                            });
+                          }
+                          setEditingProfile(!editingProfile);
+                          setProfileError(null);
+                          setProfileMessage(null);
+                        }}
+                      >
+                        {editingProfile ? 'Cancel' : 'Edit'}
+                      </Button>
                     </div>
+                    {profileError && (
+                      <p className="text-xs text-red-600 mb-2">{profileError}</p>
+                    )}
+                    {profileMessage && (
+                      <p className="text-xs text-green-600 mb-2">{profileMessage}</p>
+                    )}
+                    {editingProfile ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                            Age
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={profileForm.age}
+                            onChange={e => handleProfileChange('age', e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                            Gender
+                          </label>
+                          <select
+                            value={profileForm.gender}
+                            onChange={e => handleProfileChange('gender', e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          >
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                            Date of Birth
+                          </label>
+                          <input
+                            type="date"
+                            value={profileForm.dob}
+                            onChange={e => handleProfileChange('dob', e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={handleProfileSave}
+                            loading={savingProfile}
+                            className="px-5"
+                          >
+                            Save changes
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <dl className="space-y-2 text-sm text-slate-700">
+                        <div className="flex justify-between">
+                          <dt className="text-slate-500">Age</dt>
+                          <dd className="font-medium">{profileForm.age || 'Not set'}</dd>
+                        </div>
+                        <div className="flex justify-between">
+                          <dt className="text-slate-500">Gender</dt>
+                          <dd className="font-medium">{profileForm.gender || 'Not set'}</dd>
+                        </div>
+                        <div className="flex justify-between">
+                          <dt className="text-slate-500">Date of Birth</dt>
+                          <dd className="font-medium">{profileForm.dob || 'Not set'}</dd>
+                        </div>
+                      </dl>
+                    )}
                   </div>
-                  <p className="text-sm text-slate-600">
-                    Your payments are securely processed via Razorpay. We do not store full card details in your OptiStyle account yet.
-                  </p>
-                  <p className="text-xs text-slate-400 mt-3">
-                    Saved payment methods and UPI IDs will be available in a future update.
-                  </p>
+
+                  <div className="border border-dashed border-slate-200 rounded-xl p-4 flex flex-col justify-between bg-slate-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="w-5 h-5 text-brand-600" />
+                      <div className="font-semibold text-slate-800 text-sm uppercase tracking-wide">
+                        Payment methods
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-600">
+                      Your payments are securely processed via Razorpay. We do not store full card details in your OptiStyle account yet.
+                    </p>
+                    <p className="text-xs text-slate-400 mt-3">
+                      Saved payment methods and UPI IDs will be available in a future update.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

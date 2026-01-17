@@ -32,7 +32,7 @@ export const Footer: React.FC<FooterProps> = ({ isAdmin = false }) => {
               India's favorite online optical store. We provide high-quality eyewear at honest prices, delivered directly to your doorstep.
             </p>
             <div className="flex gap-4">
-               <SocialIcon icon={Instagram} />
+               <SocialIcon icon={Instagram} href="https://www.instagram.com/optistyle.india/" />
                <SocialIcon icon={Facebook} />
                <SocialIcon icon={Twitter} />
             </div>
@@ -118,8 +118,13 @@ export const Footer: React.FC<FooterProps> = ({ isAdmin = false }) => {
   );
 };
 
-const SocialIcon: React.FC<{ icon: any }> = ({ icon: Icon }) => (
-  <a href="#" className="p-2.5 bg-slate-50 rounded-full hover:bg-brand-600 hover:text-white transition-all text-slate-400 group">
+const SocialIcon: React.FC<{ icon: any; href?: string }> = ({ icon: Icon, href = "#" }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noreferrer"
+    className="p-2.5 bg-slate-50 rounded-full hover:bg-brand-600 hover:text-white transition-all text-slate-400 group"
+  >
     <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
   </a>
 );
